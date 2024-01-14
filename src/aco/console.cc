@@ -3,6 +3,7 @@
 #include <ncurses.h>
 #include <limits>
 #include <locale.h>
+#include <chrono>
 
 void print_menu(WINDOW* menu_win, int highlight,
                 const std::vector<std::string>& choices) {
@@ -35,7 +36,7 @@ void print_graph(WINDOW* graph_win, const ACO& g) {
   wrefresh(graph_win);
 }
 
-void print_result_window(WINDOW* output, const ACO::TsmResult& res = {}) {
+void print_result_window(WINDOW* output, const ACO::TsmResult& res, int ms) {
   int x = 1, y = 1;
   box(output, 0, 0);
   mvwprintw(output, y++, x, "Distance: %lf", res.distance);
@@ -52,7 +53,7 @@ void print_result_window(WINDOW* output, const ACO::TsmResult& res = {}) {
   }
 
   x = 1;
-  mvwprintw(output, ++y, x, "Execution time = ");
+  mvwprintw(output, ++y, x, "Execution time = %d ms", ms);
 
   wrefresh(output);
 }
@@ -149,29 +150,46 @@ void Console::Run() {
         case EXEC_NUM:
           {
             mvwscanw(menu_win, choice, 1 + choices[choice - 1].size() + 1, "%d", &exec_num);
+            if (exec_num < 1)
+              mvwprintw(menu_win, choice, 1 + choices[choice - 1].size() + 1,
+                                                    "%d is invalid", exec_num);
             break;
           }
         case POPUL_NUM:
           {
             mvwscanw(menu_win, choice, 1 + choices[choice - 1].size() + 1, "%d", &popul_num);
+            if (popul_num < 1)
+              mvwprintw(menu_win, choice, 1 + choices[choice - 1].size() + 1,
+                                                    "%d is invalid", popul_num);
             break;
           }
         case RUN:
           {
-            // create window for classic aco
-            classic_aco_win = newwin(5, maxx / 2, maxy - 6, 0);
+            if (exec_num > 0 && popul_num > 0 && !g.Empty()) {
+              classic_aco_win = newwin(5, maxx / 2, maxy - 6, 0);
+              parallel_aco_win = newwin(5, maxx / 2, maxy - 6, maxx / 2);
 
-            // create window for parallel aco
-            parallel_aco_win = newwin(5, maxx / 2, maxy - 6, maxx / 2);
+              try {
+                ACO::TsmResult classic_res = g.ClassicACO(popul_num);
+                int executions = exec_num;
 
-            // CALCULATE paths and time
-            auto classic = g.ClassicACO(popul_num);
+                auto t1 = std::chrono::high_resolution_clock::now();
+                while (--executions) {
+                  auto tmp = g.ClassicACO(popul_num);
+                  if (tmp.distance < classic_res.distance)
+                    classic_res = tmp;
+                }
+                auto t2 = std::chrono::high_resolution_clock::now();
+                auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
 
-            /* auto parallel = g.ParallelACO(popul_num); */
+                /* auto parallel = g.ParallelACO(popul_num); */
 
-            print_result_window(classic_aco_win, classic);
-            print_result_window(parallel_aco_win, {});
-
+                print_result_window(classic_aco_win, classic_res, ms_int.count());
+                print_result_window(parallel_aco_win, {}, 0);
+              } catch (const std::exception& e) {
+                // exception routine
+              }
+            }
           }
       }
       wattroff(menu_win, A_BOLD);
