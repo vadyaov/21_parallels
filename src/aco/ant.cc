@@ -26,19 +26,19 @@ void ACO::LoadGraphFromFile(const std::string& filename) {
   istrm.close();
 }
 
-std::string GetName(const std::string& filename) {
-  std::string name;
-  std::string::const_iterator it =
-      filename.begin() + filename.find_last_of('.') - 1;
-  if (it < filename.begin())
-    throw std::invalid_argument("Incorrect file extension");
+/* std::string GetName(const std::string& filename) { */
+/*   std::string name; */
+/*   std::string::const_iterator it = */
+/*       filename.begin() + filename.find_last_of('.') - 1; */
+/*   if (it < filename.begin()) */
+/*     throw std::invalid_argument("Incorrect file extension"); */
 
-  for (; it >= filename.cbegin() && *it != '/'; --it) {
-    name.insert(name.begin(), *it);
-  }
+/*   for (; it >= filename.cbegin() && *it != '/'; --it) { */
+/*     name.insert(name.begin(), *it); */
+/*   } */
 
-  return name;
-}
+/*   return name; */
+/* } */
 
 /* void ACO::ExportGraphToDot(const std::string& filename) const { */
 /*   if (adjacent_.empty()) return; */
@@ -166,7 +166,7 @@ void UpdateFeromones(std::vector<std::vector<double>>& feromones,
 
 } // namespace
 
-ACO::TsmResult ACO::SolveTravelingSalesmanProblem(int n) {
+ACO::TsmResult ACO::ClassicACO(int n) {
   if (size == 0) throw std::invalid_argument("Empty graph");
 
   TsmResult min_path{{}, std::numeric_limits<double>::max()};

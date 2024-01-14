@@ -22,6 +22,7 @@ class ACO {
   struct TsmResult {
     std::vector<int> vertices;
     double distance{0};
+    // double time;
   };
 
   ACO() : adjacent_{}, size{0}, directed{false} {}
@@ -38,7 +39,7 @@ class ACO {
 
   int Size() const noexcept;
 
-  TsmResult SolveTravelingSalesmanProblem(int n);
+  TsmResult ClassicACO(int n);
 
  public:
   /* friend std::ostream& operator<<(std::ostream& os, const ACO& g); */

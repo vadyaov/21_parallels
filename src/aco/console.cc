@@ -6,14 +6,14 @@
 
 void print_menu(WINDOW* menu_win, int highlight,
                 const std::vector<std::string>& choices) {
-  int x = 2, y = 2;
+  int x = 1, y = 1;
 
   box(menu_win, 0, 0);
   for (std::size_t i = 0; i < choices.size(); ++i) {
-    if (highlight == (int)(i + 1)) {
-      wattron(menu_win, A_REVERSE);
+    if (highlight == static_cast<int>(i + 1)) {
+      wattron(menu_win, A_STANDOUT); // turn on highlighting
       mvwprintw(menu_win, y, x, "%s", choices[i].data());
-      wattroff(menu_win, A_REVERSE);
+      wattroff(menu_win, A_STANDOUT);
     } else
       mvwprintw(menu_win, y, x, "%s", choices[i].data());
     ++y;
@@ -35,32 +35,56 @@ void print_graph(WINDOW* graph_win, const ACO& g) {
   wrefresh(graph_win);
 }
 
+void print_result_window(WINDOW* output, const ACO::TsmResult& res = {}) {
+  int x = 1, y = 1;
+  box(output, 0, 0);
+  mvwprintw(output, y++, x, "Distance: %lf", res.distance);
+  mvwprintw(output, y, x, "Path: ");
+  x += 6; // because string "path " is 6 size
+  for (int v : res.vertices) {
+    mvwprintw(output, y, x, "%d", v);
+    int add = 2;
+    while (v >= 10) {
+      v /= 10;
+      add++;
+    }
+    x += add;
+  }
+
+  x = 1;
+  mvwprintw(output, ++y, x, "Execution time = ");
+
+  wrefresh(output);
+}
+
 void Console::Run() {
   WINDOW* menu_win = nullptr;
-  WINDOW* graph_win = nullptr;
-  WINDOW* fl_wrsh_win = nullptr;
+  WINDOW* matr_win = nullptr;
+  WINDOW* classic_aco_win = nullptr;
+  WINDOW* parallel_aco_win = nullptr;
 
   setlocale(LC_ALL, "");
 
   const std::vector<std::string> choices = {
-      "Load matrix from text file (.txt)",
-      "Ant Colony Optimization (classic)",
-      "Ant Colony Optimization (parallel)",
+      "Select .txt file with matrix(graph):",
+      "Input number of executions (N):",
+      "Input number of ant populations (n):",
+      "RUN",
       "Exit"};
 
   int highlight = 1;
-  int choice = 0;
+  int choice = NO_ACTION;
 
   initscr();
   clear();
   cbreak(); /* Line buffering disabled. pass on everything */
   curs_set(0);
 
-  int startx = (100 - width) / 2;
-  int starty = (15 - heigh) / 2;
+  const int maxx = getmaxx(stdscr);
+  const int maxy = getmaxy(stdscr);
 
-  menu_win = newwin(heigh, width, starty, startx);
-  keypad(menu_win, TRUE);
+  menu_win = newwin(choices.size() + 2, maxx, 0, 0);
+  keypad(menu_win, TRUE); /* enable to use ARROW BUTNS in menu window */
 
   print_menu(menu_win, highlight, choices);
   while (1) {
@@ -86,61 +110,80 @@ void Console::Run() {
 
     print_menu(menu_win, highlight, choices);
 
-    if (choice != 0) {
+    if (choice != NO_ACTION) {
       echo();
-      if (fl_wrsh_win) {
-        wclear(fl_wrsh_win);
-        wrefresh(fl_wrsh_win);
-      }
+
+      // move cursor in menu_win to the start of text input
+      wmove(menu_win, choice, 1 + choices[choice - 1].size() + 1);
+      // delete old input from cursos to the end of line
+      wclrtoeol(menu_win);
+      // remove the highlight
+      print_menu(menu_win, 0, choices);
+
+      wattron(menu_win, A_BOLD);
 
       switch (choice) {
-        case Action::LOAD: {
-          mvprintw(16, 1, "Enter path to file: ");
-          char path[128];
-          getstr(path);
-          clrtoeol();
-          try {
-            g.LoadGraphFromFile(path);
-            mvprintw(17, 0, "Success");
+        case LOAD:
+          {
+            char path[100] = {0};
+            mvwscanw(menu_win, choice, 1 + choices[choice - 1].size() + 1, "%s", path);
+            graph_path = std::string(path);
+            try {
+              g.LoadGraphFromFile(graph_path);
 
-            if (graph_win) {
-              wclear(graph_win);
-              wrefresh(graph_win);
-            }
+              // if win already has content -> clear to avoid text overlay
+              if (matr_win) {
+                wclear(matr_win);
+                wrefresh(matr_win);
+              }
 
-            graph_win = newwin(g.Size() + 2, g.Size() * 4, 40, 30);
-            print_graph(graph_win, g);
-          } catch (const std::exception& e) {
-            mvprintw(16, 0, "%s\n", e.what());
-          }
-          break;
-        }
-        case Action::ANT_CL:
-          try {
-            ACO::TsmResult res = g.SolveTravelingSalesmanProblem(20);
-            for (std::size_t i = 0, j = 1, sz = res.vertices.size(); i != sz;
-                 ++i, j += 3) {
-              mvprintw(17, j, "%d", res.vertices[i]);
+              matr_win = newwin(g.Size() + 2, g.Size() * 4, 12, maxx / 2 - g.Size() * 2);
+              print_graph(matr_win, g);
+            } catch (const std::invalid_argument& e) {
+              wmove(menu_win, choice, 1 + choices[choice - 1].size() + 1);
+              wclrtoeol(menu_win);
+              mvwprintw(menu_win, choice, 1 + choices[choice - 1].size() + 1, "%s", e.what()); 
             }
-            mvprintw(18, 1, "distance = %lf", res.distance);
-          } catch (const std::exception& e) {
-            mvprintw(16, 0, "%s\n", e.what());
+            break;
           }
-          break;
+        case EXEC_NUM:
+          {
+            mvwscanw(menu_win, choice, 1 + choices[choice - 1].size() + 1, "%d", &exec_num);
+            break;
+          }
+        case POPUL_NUM:
+          {
+            mvwscanw(menu_win, choice, 1 + choices[choice - 1].size() + 1, "%d", &popul_num);
+            break;
+          }
+        case RUN:
+          {
+            // create window for classic aco
+            classic_aco_win = newwin(5, maxx / 2, maxy - 6, 0);
+
+            // create window for parallel aco
+            parallel_aco_win = newwin(5, maxx / 2, maxy - 6, maxx / 2);
+
+            // CALCULATE paths and time
+            auto classic = g.ClassicACO(popul_num);
+
+            /* auto parallel = g.ParallelACO(popul_num); */
+
+            print_result_window(classic_aco_win, classic);
+            print_result_window(parallel_aco_win, {});
+
+          }
       }
-      refresh();
+      wattroff(menu_win, A_BOLD);
+      print_menu(menu_win, highlight, choices);
+      noecho();
     }
 
-    for (int i = 16; i != 19; ++i) {
-      move(i, 0);
-      clrtoeol();
-    }
+    if (choice == EXIT) break;
 
-    if (choice == static_cast<int>(choices.size())) break;
-
-    choice = 0;
+    choice = NO_ACTION;
   }
 
-  clrtoeol();
+  /* clrtoeol(); */
   endwin();
 }
