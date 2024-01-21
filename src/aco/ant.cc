@@ -5,6 +5,8 @@
 #include <limits>
 #include <random>
 
+#include <thread>
+
 
 void ACO::LoadGraphFromFile(const std::string& filename) {
   std::ifstream istrm;
@@ -25,59 +27,6 @@ void ACO::LoadGraphFromFile(const std::string& filename) {
 
   istrm.close();
 }
-
-/* std::string GetName(const std::string& filename) { */
-/*   std::string name; */
-/*   std::string::const_iterator it = */
-/*       filename.begin() + filename.find_last_of('.') - 1; */
-/*   if (it < filename.begin()) */
-/*     throw std::invalid_argument("Incorrect file extension"); */
-
-/*   for (; it >= filename.cbegin() && *it != '/'; --it) { */
-/*     name.insert(name.begin(), *it); */
-/*   } */
-
-/*   return name; */
-/* } */
-
-/* void ACO::ExportGraphToDot(const std::string& filename) const { */
-/*   if (adjacent_.empty()) return; */
-
-/*   std::ofstream ostrm; */
-/*   ostrm.open(filename, std::ios::out); */
-
-/*   if (!ostrm.is_open()) */
-/*     throw std::invalid_argument("Can not open file " + filename); */
-
-/*   const std::string tab(4, ' '); */
-/*   const std::string connection = directed ? " -> " : " -- "; */
-
-/*   std::string name = GetName(filename); */
-
-/*   std::string graph_title = (directed ? "digraph " : "graph ") + name; */
-
-/*   ostrm << graph_title << " {\n"; */
-
-/*   std::size_t last = 0; */
-/*   for (std::size_t i = 0; i < size; ++i) { */
-/*     for (std::size_t j = directed ? 0 : i; j < size; ++j) { */
-/*       if (adjacent_[i * size + j] != 0) { */
-/*         if (i + 1 == last) { */
-/*           ostrm << connection << j + 1; */
-/*         } else { */
-/*           if (last) ostrm << std::endl; */
-/*           ostrm << tab << i + 1 << connection << j + 1; */
-/*         } */
-
-/*         last = j + 1; */
-/*       } */
-/*     } */
-/*   } */
-
-/*   ostrm << "\n}\n"; */
-
-/*   ostrm.close(); */
-/* } */
 
 bool ACO::Directed() const noexcept {
   for (int i = 0; i < size; ++i) {
@@ -150,12 +99,16 @@ ACO::TsmResult MinimalSolution(
 }
 
 void UpdateFeromones(std::vector<std::vector<double>>& feromones,
-                     std::vector<ACO::TsmResult>& paths, int size,
-                     double Q, double reduce) {
-  for (int i = 0; i != size; ++i)
-    for (int j = 0; j != size; ++j) feromones[i][j] *= reduce;
+                     std::vector<ACO::TsmResult>& paths) {
+  
+  static const double reduce = 0.6;
+  static const double Q = 320.0;
+  static const int sz = feromones.size();
 
-  for (int ant = 0; ant < size; ++ant) {
+  for (int i = 0; i != sz; ++i)
+    for (int j = 0; j != sz; ++j) feromones[i][j] *= reduce;
+
+  for (int ant = 0; ant < sz; ++ant) {
     double delta_fero = Q / paths[ant].distance;
     for (std::size_t i = 0; i < paths[ant].vertices.size() - 1; ++i) {
       feromones[paths[ant].vertices[i]][paths[ant].vertices[i + 1]] +=
@@ -163,60 +116,117 @@ void UpdateFeromones(std::vector<std::vector<double>>& feromones,
     }
   }
 }
+std::vector<double> CalculateChances(const std::vector<std::vector<double>>& dist,
+                                     const std::vector<std::vector<double>>& fero,
+                                     const std::vector<bool>& visited,
+                                     int current_point) {
+
+  static const double alpha = 1.0;
+  static const double beta = 4.0;
+
+  std::vector<double> wish(dist.size());
+  for (size_t j = 0; j != dist.size(); ++j)
+    if (!visited[j])
+      wish[j] = std::pow(fero[current_point][j], alpha) *
+                std::pow(dist[current_point][j], beta);
+
+  double wish_sum = std::accumulate(wish.begin(), wish.end(), 0.0);
+
+  std::vector<double> chances(dist.size());
+  for (size_t j = 0; j != dist.size(); ++j) chances[j] = wish[j] / wish_sum;
+
+  return chances;
+
+}
 
 } // namespace
+
+struct CreatePathForOneAnt {
+  const ACO& gr;
+  ACO::TsmResult& tsm;
+  const std::vector<std::vector<double>>& d;
+  const std::vector<std::vector<double>>& f;
+
+  CreatePathForOneAnt(const ACO& aco, ACO::TsmResult& t_, std::vector<std::vector<double>>& d_, 
+       std::vector<std::vector<double>>& f_) : gr{aco}, tsm{t_}, d{d_}, f{f_} {}
+
+  void operator()(int ant) {
+      int curr_point = ant;
+      const int sz = gr.Size();
+
+      std::vector<bool> visited(sz, false);
+
+      tsm.vertices[0] = tsm.vertices[sz] = curr_point;
+
+      // creating the path for ant No.i
+      for (int i = 0; i < sz - 1; ++i) {
+        visited[curr_point] = true;
+
+        std::vector<double> chances = CalculateChances(d, f, visited, curr_point);
+
+        int prev_point = curr_point;
+        curr_point = Roulette(chances); // choose the next vertex to go
+
+        if (curr_point == -1)
+          throw std::runtime_error("Cannot find the solution");
+
+        tsm.vertices[i + 1] = curr_point;
+        tsm.distance += gr[prev_point][curr_point];
+      }
+
+      tsm.distance += gr[curr_point][ant];
+  }
+};
 
 ACO::TsmResult ACO::ClassicACO(int n) {
   if (size == 0) throw std::invalid_argument("Empty graph");
 
   TsmResult min_path{{}, std::numeric_limits<double>::max()};
 
-  const double Q = 320.0;
-  const double fero_reduce = 0.6;
+  std::vector<std::vector<double>> dist = NormalizedGraph(*this);
+  std::vector<std::vector<double>> fero(size, std::vector<double>(size, 0.2));
 
-  const double alpha = 1.0;
-  const double beta = 4.0;
+  for (int iter = 0; iter < n; ++iter) { // number of populations
+    std::vector<TsmResult> ants_path(size, {std::vector<int>(size + 1, 0), 0});
+
+    for (int ant = 0; ant < size; ++ant) { // ants number is always equal to vertex number
+      CreatePathForOneAnt(*this, ants_path[ant], dist, fero)(ant);
+    }
+
+    UpdateFeromones(fero, ants_path);
+
+    if (min_path.distance > MinimalSolution(ants_path).distance)
+      min_path = MinimalSolution(ants_path);
+  }
+
+  return min_path;
+}
+
+ACO::TsmResult ACO::ParallelACO(int n) {
+  if (size == 0) throw std::invalid_argument("Empty graph");
+
+  TsmResult min_path{{}, std::numeric_limits<double>::max()};
 
   std::vector<std::vector<double>> dist = NormalizedGraph(*this);
   std::vector<std::vector<double>> fero(size, std::vector<double>(size, 0.2));
 
-  for (int iter = 0; iter < n; ++iter) {
+  std::vector<std::thread> threads;
+
+  for (int iter = 0; iter < n; ++iter) { // number of populations
     std::vector<TsmResult> ants_path(size, {std::vector<int>(size + 1, 0), 0});
 
+    threads.clear();
+
     for (int ant = 0; ant < size; ++ant) {
-      int curr_point = ant;
-      std::vector<bool> visited(size, false);
-
-      ants_path[ant].vertices[0] = ants_path[ant].vertices[size] = curr_point;
-
-      for (int i = 0; i < size - 1; ++i) {
-        visited[curr_point] = true;
-
-        std::vector<double> wish(size);
-        for (int j = 0; j != size; ++j)
-          if (!visited[j])
-            wish[j] = std::pow(fero[curr_point][j], alpha) *
-                      std::pow(dist[curr_point][j], beta);
-
-        double wish_sum = std::accumulate(wish.begin(), wish.end(), 0.0);
-
-        std::vector<double> chance(size);
-        for (int j = 0; j != size; ++j) chance[j] = wish[j] / wish_sum;
-
-        int prev_point = curr_point;
-        curr_point = Roulette(chance);
-
-        if (curr_point == -1)
-          throw std::runtime_error("Cannot find the solution");
-
-        ants_path[ant].vertices[i + 1] = curr_point;
-        ants_path[ant].distance += adjacent_[prev_point * size + curr_point];
-      }
-
-      ants_path[ant].distance += adjacent_[curr_point * size + ant];
+      threads.emplace_back(CreatePathForOneAnt(*this, ants_path[ant], dist, fero), ant);
+      /* CreatePathForOneAnt(*this, ants_path[ant], dist, fero)(ant); */
     }
 
-    UpdateFeromones(fero, ants_path, size, Q, fero_reduce);
+    std::for_each(threads.begin(), threads.end(), [](std::thread &t) {
+        t.join();
+      });
+
+    UpdateFeromones(fero, ants_path);
 
     if (min_path.distance > MinimalSolution(ants_path).distance)
       min_path = MinimalSolution(ants_path);

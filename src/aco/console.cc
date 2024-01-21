@@ -36,7 +36,7 @@ void print_graph(WINDOW* graph_win, const ACO& g) {
   wrefresh(graph_win);
 }
 
-void print_result_window(WINDOW* output, const ACO::TsmResult& res, int ms) {
+void print_result_window(WINDOW* output, const ACO::TsmResult& res, double ms) {
   int x = 1, y = 1;
   box(output, 0, 0);
   mvwprintw(output, y++, x, "Distance: %lf", res.distance);
@@ -53,7 +53,7 @@ void print_result_window(WINDOW* output, const ACO::TsmResult& res, int ms) {
   }
 
   x = 1;
-  mvwprintw(output, ++y, x, "Execution time = %d ms", ms);
+  mvwprintw(output, ++y, x, "Execution time = %lf ms", ms);
 
   wrefresh(output);
 }
@@ -134,11 +134,10 @@ void Console::Run() {
 
               // if win already has content -> clear to avoid text overlay
               if (matr_win) {
-                wclear(matr_win);
-                wrefresh(matr_win);
+                delwin(matr_win);
               }
-
               matr_win = newwin(g.Size() + 2, g.Size() * 4, 12, maxx / 2 - g.Size() * 2);
+
               print_graph(matr_win, g);
             } catch (const std::invalid_argument& e) {
               wmove(menu_win, choice, 1 + choices[choice - 1].size() + 1);
@@ -166,7 +165,10 @@ void Console::Run() {
         case RUN:
           {
             if (exec_num > 0 && popul_num > 0 && !g.Empty()) {
+              if (classic_aco_win) delwin(classic_aco_win);
               classic_aco_win = newwin(5, maxx / 2, maxy - 6, 0);
+
+              if (parallel_aco_win) delwin(parallel_aco_win);
               parallel_aco_win = newwin(5, maxx / 2, maxy - 6, maxx / 2);
 
               try {
@@ -180,12 +182,25 @@ void Console::Run() {
                     classic_res = tmp;
                 }
                 auto t2 = std::chrono::high_resolution_clock::now();
-                auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+                /* auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1); */
+                std::chrono::duration<double, std::milli> ms_double = t2 - t1;
 
-                /* auto parallel = g.ParallelACO(popul_num); */
+                print_result_window(classic_aco_win, classic_res, ms_double.count());
 
-                print_result_window(classic_aco_win, classic_res, ms_int.count());
-                print_result_window(parallel_aco_win, {}, 0);
+
+                auto parallel_res = g.ParallelACO(popul_num);
+                executions = exec_num;
+                t1 = std::chrono::high_resolution_clock::now();
+                while (--executions) {
+                  auto tmp = g.ParallelACO(popul_num);
+                  if (tmp.distance < parallel_res.distance)
+                    parallel_res = tmp;
+                }
+                t2 = std::chrono::high_resolution_clock::now();
+                /* ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1); */
+                ms_double = t2 - t1;
+
+                print_result_window(parallel_aco_win, parallel_res, ms_double.count());
               } catch (const std::exception& e) {
                 // exception routine
               }
@@ -202,6 +217,7 @@ void Console::Run() {
     choice = NO_ACTION;
   }
 
+  delwin(menu_win);
   /* clrtoeol(); */
   endwin();
 }

@@ -22,16 +22,11 @@ class ACO {
   struct TsmResult {
     std::vector<int> vertices;
     double distance{0};
-    // double time;
   };
 
   ACO() : adjacent_{}, size{0}, directed{false} {}
 
-  // loading graph from file with adjacent matrix
   void LoadGraphFromFile(const std::string& filename);
-
-  // exporting graph to .gv (.dot) file
-  /* void ExportGraphToDot(const std::string& filename) const; */
 
   bool IsDirect() const noexcept;
 
@@ -40,6 +35,7 @@ class ACO {
   int Size() const noexcept;
 
   TsmResult ClassicACO(int n);
+  TsmResult ParallelACO(int n);
 
  public:
   /* friend std::ostream& operator<<(std::ostream& os, const ACO& g); */
@@ -56,6 +52,11 @@ class ACO {
   std::vector<int> adjacent_;  // adjacent matrix
   int size;            // vertex number
   bool directed;
+
+ private:
+  void CreatePathForCurrentAnt(ACO::TsmResult& path, int current_ant, int sz,
+                             const std::vector<std::vector<double>>& dist,
+                             const std::vector<std::vector<double>>& fero);
 };
 
 #endif  // ACO_H_
