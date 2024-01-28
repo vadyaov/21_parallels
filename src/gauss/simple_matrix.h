@@ -25,7 +25,7 @@ class SimpleMatrix {
 
       data.reserve(rows * cols);
       double tmp;
-      for (int it = 0; it != data.capacity(); ++it) {
+      for (size_t it = 0; it != data.capacity(); ++it) {
         istrm >> tmp;
         data.push_back(tmp);
       }

@@ -23,8 +23,11 @@ all: install #test
 # 	genhtml coverage.info --output-directory coverage_report
 # 	open ./coverage_report/index.html
 #
-install:
+aco:
 	$(CXX) $(CXXFLAGS) aco/*.cc -lncursesw -ltinfo -o ant.out
+
+gauss:
+	$(CXX) $(CXXFLAGS) gauss/*cc -lncursesw -ltinfo -o gauss.out
 
 # s21_graph.a: $(GRAPH_OBJ)
 # 	ar -rcs $@ $< 
@@ -41,3 +44,5 @@ install:
 # app: s21_graph.a s21_graph_algorithms.a
 # 	$(CXX) $(CXXFLAGS) console/*.cc $? -lncursesw -ltinfo -o $@.out
 # 	./$@.out
+
+.PHONY: aco gauss
