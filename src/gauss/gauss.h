@@ -1,9 +1,9 @@
 #ifndef GAUSS_H_
 #define GAUSS_H_
 
-#include <vector>
+#include "simple_matrix.h"
 
-class SimpleMatrix;
+#include <vector>
 
 namespace GaussMethod {
 

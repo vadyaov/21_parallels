@@ -1,4 +1,4 @@
-#include "simple_matrix.h"
+#include "gauss.h"
 
 #include <iostream>
 
@@ -9,13 +9,12 @@
 
 int main() {
 
-  SimpleMatrix m("../txts/gauss/matrix1.txt");
-
-  std::cout << m << std::endl;
-
-  m.SwapRows(0, 1);
-
-  std::cout << m << std::endl;
+  SimpleMatrix m("../txts/gauss/matrix_5.txt");
+  std::cout << "m:\n" << m << "\n";
+  auto answ = GaussMethod::Gauss::Solve(m);
+  for (size_t i = 0; i != answ.size(); ++i) {
+    std::cout << "x" << i + 1 << " = " << answ[i] << "\n";
+  }
 
   return 0;
 }

@@ -36,18 +36,17 @@ class SimpleMatrix {
         throw std::range_error("incorrect row");
 
       if (r1 == r2) return;
-
+      
       for (int j = 0; j != cols; ++j)
         std::swap(this->at(r1, j), this->at(r2, j));
     }
 
     double& at(int i, int j) {
-      std::cout << "at " << i << " " << j << "\n";
-      return data.at(i * rows + j);
+      return data[i * cols + j];
     }
 
     const double& at(int i, int j) const {
-      return data.at(i * rows + j);
+      return data[i * cols + j];
     }
 
     int get_rows() const noexcept { return rows; }
@@ -67,7 +66,7 @@ class SimpleMatrix {
 
 };
 
-std::ostream& operator<<(std::ostream& os, const SimpleMatrix& m) {
+inline std::ostream& operator<<(std::ostream& os, const SimpleMatrix& m) {
   m.dump(os);
   return os;
 }
