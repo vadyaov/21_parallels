@@ -53,6 +53,7 @@ void print_result_window(WINDOW* output, const std::vector<double>& res, double 
 void Console::Run() {
   WINDOW* menu_win = nullptr;
   WINDOW* matr_win = nullptr;
+
   WINDOW* classic_aco_win = nullptr;
   WINDOW* parallel_aco_win = nullptr;
 
@@ -169,7 +170,6 @@ void Console::Run() {
                 std::chrono::duration<double, std::milli> ms_double = t2 - t1;
 
                 print_result_window(classic_aco_win, classic_res, ms_double.count());
-
 
                 auto parallel_res = GaussMethod::Gauss::Solve(*matrix);
                 executions = exec_num;

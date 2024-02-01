@@ -2,62 +2,75 @@
 
 namespace GaussMethod {
 
-int FindFirstNonZeroRow(const SimpleMatrix& matrix, int k) {
-  int row = k;
-  while (row != matrix.get_rows() && matrix.at(row, k) == 0)
-    ++row;
+int FindPivotRow(const SimpleMatrix& matrix, int row, int col) {
+  int max_row = row;
+  for (int i = row + 1; i != matrix.get_rows(); ++i) {
+    if (matrix.at(i, col) > matrix.at(max_row, col))
+      max_row = i;
+  }
 
-  if (row == matrix.get_rows()) throw std::runtime_error("continue");
+  if (std::abs(matrix.at(max_row, col)) < Gauss::EPS) throw std::runtime_error("continue");
 
-  return row;
+  return max_row;
 }
 
-std::vector<double> Gauss::Solve(const SimpleMatrix& matr) {
-  SimpleMatrix clone = matr;
+int Gauss::Solve(SimpleMatrix matr, std::vector<double>& answer) {
+  const int n = matr.get_rows();
+  const int m = matr.get_cols() - 1;
 
   // прямой ход
-  for (int k = 0; k < clone.get_rows(); ++k) {
-    if (clone.at(k, k) == 0) {
+  std::vector<int> where(m, -1);
+  for (int row = 0, col = 0; row < n && col < m; ++col) {
+    //finding pivot element
       try {
-        clone.SwapRows(k, FindFirstNonZeroRow(clone, k));
+        matr.SwapRows(row, FindPivotRow(matr, row, col));
       } catch (...) {
         continue;
       }
-    }
+      where[col] = row;
 
-    for (int i = k + 1; i != clone.get_rows(); ++i) {
-      auto coef = clone.at(i, k) / clone.at(k, k);
-      for (int j = k; j != clone.get_cols(); ++j) {
-        clone.at(i, j) = clone.at(i, j) - clone.at(k, j) * coef;
+    for (int i = row + 1; i != n; ++i) {
+      auto coef = matr.at(i, col) / matr.at(row, col);
+      for (int j = col; j <= m; ++j) {
+        matr.at(i, j) -= matr.at(row, j) * coef;
       }
     }
+    ++row;
   }
 
-  /* matr = clone; */
+  // обратный ход
+  answer.assign(m, 0);
+  for (int row = n - 1; row >= 0; --row) {
+    double sum = 0;
+    for (int col = m - 1; col >= 0; --col) {
+      sum += matr.at(row, col);
+    }
 
-  /* std::cout << clone << std::endl; */
+    if (std::abs(sum - matr.at(row, m)) > EPS) {
+      return NONE;
+    }
 
-  for (int row = clone.get_rows() - 1; row >= 0; --row) {
-    for (int col = clone.get_cols() - 1; col >= 0; --col)
-      clone.at(row, col) /= clone.at(row, row);
+    for (int col = matr.get_cols() - 1; col >= 0; --col)
+      matr.at(row, col) /= matr.at(row, row);
 
     for (int i = row - 1; i >= 0; --i) {
-      double K = clone.at(i, row) / clone.at(row, row);
-      for (int j = clone.get_cols() - 1; j >= 0; --j) {
-        clone.at(i, j) = clone.at(i, j) - clone.at(row, j) * K;
+      double K = matr.at(i, row) / matr.at(row, row);
+      for (int j = matr.get_cols() - 1; j >= 0; --j) {
+        matr.at(i, j) = matr.at(i, j) - matr.at(row, j) * K;
       }
     }
 
   }
 
-  std::vector<double> answer(clone.get_rows());
-  for (int i = 0; i != clone.get_rows(); ++i) {
-    answer[i] = clone.at(i, clone.get_rows());
+  for (int i = 0; i != m; ++i)
+    if (where[i] == -1) return LOT;
+
+
+  for (int i = 0; i != n; ++i) {
+    answer[i] = matr.at(i, n);
   }
 
-  std::cout << clone << std::endl;
-
-  return answer;
+  return ONE;
 }
 
 } // namespace GaussMethod

@@ -35,7 +35,8 @@ class SimpleMatrix {
       if (!(r1 < rows && r2 < rows) || !(r1 >= 0 && r2 >= 0))
         throw std::range_error("incorrect row");
 
-      if (r1 == r2) return;
+      if (r1 == r2)
+        return;
       
       for (int j = 0; j != cols; ++j)
         std::swap(this->at(r1, j), this->at(r2, j));

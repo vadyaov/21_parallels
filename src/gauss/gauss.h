@@ -9,7 +9,9 @@ namespace GaussMethod {
 
   class Gauss {
     public:
-      static std::vector<double> Solve(const SimpleMatrix& matr);
+      constexpr static double EPS = 1e-6;
+      enum {NONE = 0, ONE, LOT};
+      static int Solve(SimpleMatrix matr, std::vector<double>& answer);
   };
 
 } // namespace GaussMethod
