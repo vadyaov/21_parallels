@@ -27,7 +27,7 @@ aco:
 	$(CXX) $(CXXFLAGS) aco/*.cc -lncursesw -ltinfo -o ant.out
 
 gauss:
-	$(CXX) $(CXXFLAGS) gauss/*cc -lncursesw -ltinfo -o gauss.out
+	$(CXX) $(CXXFLAGS) consolebase.cc gauss/*cc -lncursesw -ltinfo -o gauss.out
 
 # s21_graph.a: $(GRAPH_OBJ)
 # 	ar -rcs $@ $< 

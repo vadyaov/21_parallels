@@ -38,6 +38,9 @@ int Gauss::Solve(SimpleMatrix matr, std::vector<double>& answer) {
     ++row;
   }
 
+  /* std::cout.precision(1); */
+  /* std::cout << matr << std::endl; */
+
   // обратный ход
   answer.assign(m, 0);
   for (int row = n - 1; row >= 0; --row) {
@@ -46,7 +49,7 @@ int Gauss::Solve(SimpleMatrix matr, std::vector<double>& answer) {
       sum += matr.at(row, col);
     }
 
-    if (std::abs(sum - matr.at(row, m)) > EPS) {
+    if (std::abs(sum) < EPS && matr.at(row, m) > EPS) {
       return NONE;
     }
 

@@ -1,23 +1,20 @@
 #ifndef CONSOLE_H_
 #define CONSOLE_H_
 
-/* #include <ncurces.h> */
-
 #include "gauss.h"
+#include "../consolebase.h"
 
-class Console {
+class Console : public BaseConsole {
  public:
-  enum Action { NO_ACTION = 0, LOAD, EXEC_NUM, RUN, EXIT };
 
-  Console() : matrix{nullptr}, exec_num{0} {}
+  Console() : BaseConsole(), matrix{nullptr} {}
   ~Console() { delete matrix; }
 
-  void Run();
+  void Run() override;
 
  private:
   SimpleMatrix* matrix;
-  std::string matrix_path;
-  int exec_num;
+
 };
 
 #endif  // CONSOLE_H_

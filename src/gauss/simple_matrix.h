@@ -59,7 +59,7 @@ class SimpleMatrix {
     void dump(std::ostream& os) const {
       for (int i = 0; i != rows; ++i) {
         for (int j = 0; j != cols; ++j) {
-          os << this->at(i, j) << std::setw(4);
+          os << std::setw(4) << this->at(i, j);
         }
         os << "\n";
       }

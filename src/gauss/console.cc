@@ -118,12 +118,12 @@ void Console::Run() {
       switch (choice) {
         case LOAD:
           {
-            char path[100] = {0};
-            mvwscanw(menu_win, choice, 1 + choices[choice - 1].size() + 1, "%s", path);
-            matrix_path = std::string(path);
+            char filepath[100] = {0};
+            mvwscanw(menu_win, choice, 1 + choices[choice - 1].size() + 1, "%s", filepath);
+            path = std::string(filepath);
             try {
               delete matrix;
-              matrix = new SimpleMatrix(matrix_path);
+              matrix = new SimpleMatrix(path);
 
               // if win already has content -> clear to avoid text overlay
               if (matr_win) {
@@ -150,7 +150,8 @@ void Console::Run() {
           }
         case RUN:
           {
-            if (exec_num > 0) {
+            if (exec_num < 1) break;
+
               if (classic_aco_win) delwin(classic_aco_win);
               classic_aco_win = newwin(5, maxx / 2, maxy - 6, 0);
 
@@ -158,34 +159,49 @@ void Console::Run() {
               parallel_aco_win = newwin(5, maxx / 2, maxy - 6, maxx / 2);
 
               try {
-                auto classic_res = GaussMethod::Gauss::Solve(*matrix);
+                std::vector<double> solution;
+                int opt = GaussMethod::Gauss::Solve(*matrix, solution);
                 int executions = exec_num;
 
-                auto t1 = std::chrono::high_resolution_clock::now();
-                while (--executions) {
-                  classic_res = GaussMethod::Gauss::Solve(*matrix);
+                if (opt == GaussMethod::Gauss::NONE) {
+
+                } else if (opt == GaussMethod::Gauss::LOT) {
+
+                } else {
+                  auto t1 = std::chrono::high_resolution_clock::now();
+                  while (--executions) {
+                    GaussMethod::Gauss::Solve(*matrix, solution);
+                  }
+                  auto t2 = std::chrono::high_resolution_clock::now();
+
+                  /* auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1); */
+                  std::chrono::duration<double, std::milli> ms_double = t2 - t1;
+
+                  print_result_window(classic_aco_win, solution, ms_double.count());
                 }
-                auto t2 = std::chrono::high_resolution_clock::now();
-                /* auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1); */
-                std::chrono::duration<double, std::milli> ms_double = t2 - t1;
 
-                print_result_window(classic_aco_win, classic_res, ms_double.count());
-
-                auto parallel_res = GaussMethod::Gauss::Solve(*matrix);
+                opt = GaussMethod::Gauss::Solve(*matrix, solution);
                 executions = exec_num;
-                t1 = std::chrono::high_resolution_clock::now();
-                while (--executions) {
-                  parallel_res = GaussMethod::Gauss::Solve(*matrix);
-                }
-                t2 = std::chrono::high_resolution_clock::now();
-                /* ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1); */
-                ms_double = t2 - t1;
 
-                print_result_window(parallel_aco_win, parallel_res, ms_double.count());
+                if (opt == GaussMethod::Gauss::NONE) {
+
+                } else if (opt == GaussMethod::Gauss::LOT) {
+
+                } else {
+                  auto t1 = std::chrono::high_resolution_clock::now();
+                  while (--executions) {
+                    GaussMethod::Gauss::Solve(*matrix, solution);
+                  }
+                  auto t2 = std::chrono::high_resolution_clock::now();
+                  /* ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1); */
+                  std::chrono::duration<double, std::milli> ms_double = t2 - t1;
+
+                  print_result_window(parallel_aco_win, solution, ms_double.count());
+                }
               } catch (const std::exception& e) {
-                // exception routine
+                /* // exception routine */
+                /*   mvprintw(50,20, "HERERERE\n"); */
               }
-            }
           }
       }
       wattroff(menu_win, A_BOLD);
