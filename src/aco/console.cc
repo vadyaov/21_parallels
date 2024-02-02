@@ -69,7 +69,6 @@ void Console::Run() {
   const std::vector<std::string> choices = {
       "Select .txt file with matrix(graph):",
       "Input number of executions (N):",
-      "Input number of ant populations (n):",
       "RUN",
       "Exit"};
 
@@ -126,11 +125,11 @@ void Console::Run() {
       switch (choice) {
         case LOAD:
           {
-            char path[100] = {0};
-            mvwscanw(menu_win, choice, 1 + choices[choice - 1].size() + 1, "%s", path);
-            graph_path = std::string(path);
+            char filepath[100] = {0};
+            mvwscanw(menu_win, choice, 1 + choices[choice - 1].size() + 1, "%s", filepath);
+            path = std::string(filepath);
             try {
-              g.LoadGraphFromFile(graph_path);
+              g.LoadGraphFromFile(path);
 
               // if win already has content -> clear to avoid text overlay
               if (matr_win) {
@@ -154,17 +153,9 @@ void Console::Run() {
                                                     "%d is invalid", exec_num);
             break;
           }
-        case POPUL_NUM:
-          {
-            mvwscanw(menu_win, choice, 1 + choices[choice - 1].size() + 1, "%d", &popul_num);
-            if (popul_num < 1)
-              mvwprintw(menu_win, choice, 1 + choices[choice - 1].size() + 1,
-                                                    "%d is invalid", popul_num);
-            break;
-          }
         case RUN:
           {
-            if (exec_num > 0 && popul_num > 0 && !g.Empty()) {
+            if (exec_num > 0 && !g.Empty()) {
               if (classic_aco_win) delwin(classic_aco_win);
               classic_aco_win = newwin(5, maxx / 2, maxy - 6, 0);
 
@@ -172,12 +163,12 @@ void Console::Run() {
               parallel_aco_win = newwin(5, maxx / 2, maxy - 6, maxx / 2);
 
               try {
-                ACO::TsmResult classic_res = g.ClassicACO(popul_num);
+                ACO::TsmResult classic_res = g.ClassicACO(25);
                 int executions = exec_num;
 
                 auto t1 = std::chrono::high_resolution_clock::now();
                 while (--executions) {
-                  auto tmp = g.ClassicACO(popul_num);
+                  auto tmp = g.ClassicACO(25);
                   if (tmp.distance < classic_res.distance)
                     classic_res = tmp;
                 }
@@ -188,11 +179,11 @@ void Console::Run() {
                 print_result_window(classic_aco_win, classic_res, ms_double.count());
 
 
-                auto parallel_res = g.ParallelACO(popul_num);
+                auto parallel_res = g.ParallelACO(25);
                 executions = exec_num;
                 t1 = std::chrono::high_resolution_clock::now();
                 while (--executions) {
-                  auto tmp = g.ParallelACO(popul_num);
+                  auto tmp = g.ParallelACO(25);
                   if (tmp.distance < parallel_res.distance)
                     parallel_res = tmp;
                 }

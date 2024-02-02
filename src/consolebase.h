@@ -8,7 +8,7 @@ class BaseConsole {
 
     BaseConsole() : exec_num{0} {}
 
-    virtual ~BaseConsole() = 0;
+    virtual ~BaseConsole() {}
 
     virtual void Run() = 0;
 

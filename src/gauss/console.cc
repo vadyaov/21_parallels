@@ -50,6 +50,19 @@ void print_result_window(WINDOW* output, const std::vector<double>& res, double 
   wrefresh(output);
 }
 
+void print_result_error_window(WINDOW* output, int flag) {
+  box(output, 0, 0);
+
+  /* std::cout << "flag ========= " << flag << "\n"; */
+
+  if (flag == GaussMethod::Gauss::NONE)
+    mvwprintw(output, 1, 1, "NO SOLUTION EXISTS");
+  else
+    mvwprintw(output, 1, 1, "A LOT OF SOLUTIONS");
+
+  wrefresh(output);
+}
+
 void Console::Run() {
   WINDOW* menu_win = nullptr;
   WINDOW* matr_win = nullptr;
@@ -136,7 +149,7 @@ void Console::Run() {
             } catch (const std::exception& e) {
               wmove(menu_win, choice, 1 + choices[choice - 1].size() + 1);
               wclrtoeol(menu_win);
-              mvwprintw(menu_win, choice, 1 + choices[choice - 1].size() + 1, "%s", e.what()); 
+              mvwprintw(menu_win, choice, 1 + choices[choice - 1].size() + 1, "%s ", e.what()); 
             }
             break;
           }
@@ -163,44 +176,33 @@ void Console::Run() {
                 int opt = GaussMethod::Gauss::Solve(*matrix, solution);
                 int executions = exec_num;
 
-                if (opt == GaussMethod::Gauss::NONE) {
-
-                } else if (opt == GaussMethod::Gauss::LOT) {
-
+                if (opt != GaussMethod::Gauss::ONE) {
+                  print_result_error_window(classic_aco_win, opt);
+                  print_result_error_window(parallel_aco_win, opt);
                 } else {
                   auto t1 = std::chrono::high_resolution_clock::now();
-                  while (--executions) {
+                  while (executions--) {
                     GaussMethod::Gauss::Solve(*matrix, solution);
                   }
                   auto t2 = std::chrono::high_resolution_clock::now();
 
-                  /* auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1); */
                   std::chrono::duration<double, std::milli> ms_double = t2 - t1;
 
                   print_result_window(classic_aco_win, solution, ms_double.count());
-                }
 
-                opt = GaussMethod::Gauss::Solve(*matrix, solution);
-                executions = exec_num;
+                  executions = exec_num;
 
-                if (opt == GaussMethod::Gauss::NONE) {
-
-                } else if (opt == GaussMethod::Gauss::LOT) {
-
-                } else {
-                  auto t1 = std::chrono::high_resolution_clock::now();
-                  while (--executions) {
+                  auto t3 = std::chrono::high_resolution_clock::now();
+                  while (executions--) {
                     GaussMethod::Gauss::Solve(*matrix, solution);
                   }
-                  auto t2 = std::chrono::high_resolution_clock::now();
-                  /* ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1); */
-                  std::chrono::duration<double, std::milli> ms_double = t2 - t1;
+                  auto t4 = std::chrono::high_resolution_clock::now();
+                  ms_double = t4 - t3;
 
                   print_result_window(parallel_aco_win, solution, ms_double.count());
                 }
               } catch (const std::exception& e) {
-                /* // exception routine */
-                /*   mvprintw(50,20, "HERERERE\n"); */
+
               }
           }
       }

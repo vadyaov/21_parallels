@@ -6,7 +6,7 @@ ANT_SRCS = s21_graph.cc
 # GCOV_TARGET = ./coverage
 # COVERFLAGS = -fprofile-arcs -ftest-coverage
 
-all: install #test
+all: aco gauss #test
 
 # test: lib
 # 	@mkdir -p examples/dots/
@@ -25,9 +25,11 @@ all: install #test
 #
 aco:
 	$(CXX) $(CXXFLAGS) aco/*.cc -lncursesw -ltinfo -o ant.out
+	./ant.out
 
 gauss:
-	$(CXX) $(CXXFLAGS) consolebase.cc gauss/*cc -lncursesw -ltinfo -o gauss.out
+	$(CXX) $(CXXFLAGS) gauss/*cc -lncursesw -ltinfo -o gauss.out
+	./gauss.out
 
 # s21_graph.a: $(GRAPH_OBJ)
 # 	ar -rcs $@ $< 
@@ -44,5 +46,8 @@ gauss:
 # app: s21_graph.a s21_graph_algorithms.a
 # 	$(CXX) $(CXXFLAGS) console/*.cc $? -lncursesw -ltinfo -o $@.out
 # 	./$@.out
+
+clear:
+	rm -f *.out
 
 .PHONY: aco gauss

@@ -21,7 +21,6 @@ int Gauss::Solve(SimpleMatrix matr, std::vector<double>& answer) {
   // прямой ход
   std::vector<int> where(m, -1);
   for (int row = 0, col = 0; row < n && col < m; ++col) {
-    //finding pivot element
       try {
         matr.SwapRows(row, FindPivotRow(matr, row, col));
       } catch (...) {
@@ -49,7 +48,7 @@ int Gauss::Solve(SimpleMatrix matr, std::vector<double>& answer) {
       sum += matr.at(row, col);
     }
 
-    if (std::abs(sum) < EPS && matr.at(row, m) > EPS) {
+    if (std::abs(sum) < EPS && std::abs(matr.at(row, m)) > EPS) {
       return NONE;
     }
 
