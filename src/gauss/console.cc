@@ -4,12 +4,12 @@
 #include <locale.h>
 #include <chrono>
 
-void print_graph(WINDOW* graph_win, const SimpleGraph<double>& g) {
+void Console::PrintGraph(WINDOW* graph_win) {
   int x = 1, y = 1;
   box(graph_win, 0, 0);
-  for (int i = 0, sz = g.get_rows(); i != sz; ++i) {
-    for (int j = 0; j != g.get_cols(); ++j) {
-      mvwprintw(graph_win, y, x, "%.1lf", g[i][j]);
+  for (int i = 0, sz = matrix.get_rows(); i != sz; ++i) {
+    for (int j = 0; j != matrix.get_cols(); ++j) {
+      mvwprintw(graph_win, y, x, "%.1lf", matrix[i][j]);
       x += 5;
     }
     y++;
@@ -127,7 +127,7 @@ void Console::Run() {
               matr_win = newwin(matrix.get_rows() + 2, matrix.get_cols() * 6,
                                           12, maxx / 2 - matrix.get_cols() * 2);
 
-              print_graph(matr_win, matrix);
+              PrintGraph(matr_win);
             } catch (const std::exception& e) {
               wmove(menu_win, choice, 1 + choices[choice - 1].size() + 1);
               wclrtoeol(menu_win);

@@ -4,11 +4,14 @@
 #include "../consolebase.h"
 #include "ant.h"
 
-class Console : public BaseConsole {
+class Console final : public BaseConsole {
  public:
   Console() : BaseConsole() {}
+  ~Console()  {}
 
   void Run() override;
+
+  void PrintGraph(WINDOW*) override;
 
  private:
   SimpleGraph<int> g;

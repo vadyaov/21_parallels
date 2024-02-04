@@ -4,20 +4,6 @@
 #include <locale.h>
 #include <chrono>
 
-void print_graph(WINDOW* graph_win, const SimpleGraph<int>& g) {
-  int x = 1, y = 1;
-  box(graph_win, 0, 0);
-  for (std::size_t i = 0, sz = g.Size(); i != sz; ++i) {
-    for (std::size_t j = 0; j != sz; ++j) {
-      mvwprintw(graph_win, y, x, "%d", g[i][j]);
-      x += 4;
-    }
-    y++;
-    x = 1;
-  }
-  wrefresh(graph_win);
-}
-
 void print_result_window(WINDOW* output, const AntColony::TsmResult& res, double ms) {
   int x = 1, y = 1;
   box(output, 0, 0);
@@ -38,6 +24,20 @@ void print_result_window(WINDOW* output, const AntColony::TsmResult& res, double
   mvwprintw(output, ++y, x, "Execution time = %lf ms", ms);
 
   wrefresh(output);
+}
+
+void Console::PrintGraph(WINDOW* graph_win) {
+  int x = 1, y = 1;
+  box(graph_win, 0, 0);
+  for (std::size_t i = 0, sz = g.Size(); i != sz; ++i) {
+    for (std::size_t j = 0; j != sz; ++j) {
+      mvwprintw(graph_win, y, x, "%d", g[i][j]);
+      x += 4;
+    }
+    y++;
+    x = 1;
+  }
+  wrefresh(graph_win);
 }
 
 void Console::Run() {
@@ -119,7 +119,7 @@ void Console::Run() {
               }
               matr_win = newwin(g.Size() + 2, g.Size() * 4, 12, maxx / 2 - g.Size() * 2);
 
-              print_graph(matr_win, g);
+              PrintGraph(matr_win);
             } catch (const std::invalid_argument& e) {
               wmove(menu_win, choice, 1 + choices[choice - 1].size() + 1);
               wclrtoeol(menu_win);
