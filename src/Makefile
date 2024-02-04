@@ -47,7 +47,7 @@ gauss:
 # 	$(CXX) $(CXXFLAGS) console/*.cc $? -lncursesw -ltinfo -o $@.out
 # 	./$@.out
 
-clear:
+clean:
 	rm -f *.out
 
 .PHONY: aco gauss

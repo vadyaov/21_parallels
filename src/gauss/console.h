@@ -7,13 +7,13 @@
 class Console : public BaseConsole {
  public:
 
-  Console() : BaseConsole(), matrix{nullptr} {}
-  ~Console() { delete matrix; }
+  Console() : BaseConsole() {}
+  ~Console() {}
 
   void Run() override;
 
  private:
-  SimpleMatrix* matrix;
+  SimpleGraph<double> matrix;
 
 };
 

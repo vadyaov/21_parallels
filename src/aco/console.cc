@@ -1,28 +1,10 @@
 #include "console.h"
 
-#include <ncurses.h>
 #include <limits>
 #include <locale.h>
 #include <chrono>
 
-void print_menu(WINDOW* menu_win, int highlight,
-                const std::vector<std::string>& choices) {
-  int x = 1, y = 1;
-
-  box(menu_win, 0, 0);
-  for (std::size_t i = 0; i < choices.size(); ++i) {
-    if (highlight == static_cast<int>(i + 1)) {
-      wattron(menu_win, A_STANDOUT); // turn on highlighting
-      mvwprintw(menu_win, y, x, "%s", choices[i].data());
-      wattroff(menu_win, A_STANDOUT);
-    } else
-      mvwprintw(menu_win, y, x, "%s", choices[i].data());
-    ++y;
-  }
-  wrefresh(menu_win);
-}
-
-void print_graph(WINDOW* graph_win, const ACO& g) {
+void print_graph(WINDOW* graph_win, const SimpleGraph<int>& g) {
   int x = 1, y = 1;
   box(graph_win, 0, 0);
   for (std::size_t i = 0, sz = g.Size(); i != sz; ++i) {
@@ -36,7 +18,7 @@ void print_graph(WINDOW* graph_win, const ACO& g) {
   wrefresh(graph_win);
 }
 
-void print_result_window(WINDOW* output, const ACO::TsmResult& res, double ms) {
+void print_result_window(WINDOW* output, const AntColony::TsmResult& res, double ms) {
   int x = 1, y = 1;
   box(output, 0, 0);
   mvwprintw(output, y++, x, "Distance: %lf", res.distance);
@@ -86,7 +68,7 @@ void Console::Run() {
   menu_win = newwin(choices.size() + 2, maxx, 0, 0);
   keypad(menu_win, TRUE); /* enable to use ARROW BUTNS in menu window */
 
-  print_menu(menu_win, highlight, choices);
+  PrintMenu(menu_win, highlight, choices);
   while (1) {
     noecho();
     int c = wgetch(menu_win);
@@ -108,7 +90,7 @@ void Console::Run() {
         break;
     }
 
-    print_menu(menu_win, highlight, choices);
+    PrintMenu(menu_win, highlight, choices);
 
     if (choice != NO_ACTION) {
       echo();
@@ -118,7 +100,7 @@ void Console::Run() {
       // delete old input from cursos to the end of line
       wclrtoeol(menu_win);
       // remove the highlight
-      print_menu(menu_win, 0, choices);
+      PrintMenu(menu_win, 0, choices);
 
       wattron(menu_win, A_BOLD);
 
@@ -163,12 +145,12 @@ void Console::Run() {
               parallel_aco_win = newwin(5, maxx / 2, maxy - 6, maxx / 2);
 
               try {
-                ACO::TsmResult classic_res = g.ClassicACO(25);
+                AntColony::TsmResult classic_res = AntColony::ClassicSolve(g, 25);
                 int executions = exec_num;
 
                 auto t1 = std::chrono::high_resolution_clock::now();
                 while (--executions) {
-                  auto tmp = g.ClassicACO(25);
+                  auto tmp = AntColony::ClassicSolve(g, 25);
                   if (tmp.distance < classic_res.distance)
                     classic_res = tmp;
                 }
@@ -179,11 +161,11 @@ void Console::Run() {
                 print_result_window(classic_aco_win, classic_res, ms_double.count());
 
 
-                auto parallel_res = g.ParallelACO(25);
+                auto parallel_res = AntColony::ParallelSolve(g, 25);
                 executions = exec_num;
                 t1 = std::chrono::high_resolution_clock::now();
                 while (--executions) {
-                  auto tmp = g.ParallelACO(25);
+                  auto tmp = AntColony::ParallelSolve(g, 25);
                   if (tmp.distance < parallel_res.distance)
                     parallel_res = tmp;
                 }
@@ -199,7 +181,7 @@ void Console::Run() {
           }
       }
       wattroff(menu_win, A_BOLD);
-      print_menu(menu_win, highlight, choices);
+      PrintMenu(menu_win, highlight, choices);
       noecho();
     }
 

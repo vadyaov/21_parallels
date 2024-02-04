@@ -1,33 +1,15 @@
 #include "console.h"
 
-#include <ncurses.h>
 #include <limits>
 #include <locale.h>
 #include <chrono>
 
-void print_menu(WINDOW* menu_win, int highlight,
-                const std::vector<std::string>& choices) {
-  int x = 1, y = 1;
-
-  box(menu_win, 0, 0);
-  for (std::size_t i = 0; i < choices.size(); ++i) {
-    if (highlight == static_cast<int>(i + 1)) {
-      wattron(menu_win, A_STANDOUT); // turn on highlighting
-      mvwprintw(menu_win, y, x, "%s", choices[i].data());
-      wattroff(menu_win, A_STANDOUT);
-    } else
-      mvwprintw(menu_win, y, x, "%s", choices[i].data());
-    ++y;
-  }
-  wrefresh(menu_win);
-}
-
-void print_graph(WINDOW* graph_win, const SimpleMatrix* g) {
+void print_graph(WINDOW* graph_win, const SimpleGraph<double>& g) {
   int x = 1, y = 1;
   box(graph_win, 0, 0);
-  for (int i = 0, sz = g->get_rows(); i != sz; ++i) {
-    for (int j = 0; j != g->get_cols(); ++j) {
-      mvwprintw(graph_win, y, x, "%.1lf", g->at(i, j));
+  for (int i = 0, sz = g.get_rows(); i != sz; ++i) {
+    for (int j = 0; j != g.get_cols(); ++j) {
+      mvwprintw(graph_win, y, x, "%.1lf", g[i][j]);
       x += 5;
     }
     y++;
@@ -42,8 +24,11 @@ void print_result_window(WINDOW* output, const std::vector<double>& res, double 
   for (const double i : res) {
     mvwprintw(output, y, x, "%.1lf", i);
     x += 4;
+    if (x >= getmaxx(output)) {
+      x = 1;
+      ++y;
+    }
   }
-  y++;
   x = 1;
   mvwprintw(output, ++y, x, "Execution time = %lf ms", ms);
 
@@ -52,8 +37,6 @@ void print_result_window(WINDOW* output, const std::vector<double>& res, double 
 
 void print_result_error_window(WINDOW* output, int flag) {
   box(output, 0, 0);
-
-  /* std::cout << "flag ========= " << flag << "\n"; */
 
   if (flag == GaussMethod::Gauss::NONE)
     mvwprintw(output, 1, 1, "NO SOLUTION EXISTS");
@@ -67,8 +50,8 @@ void Console::Run() {
   WINDOW* menu_win = nullptr;
   WINDOW* matr_win = nullptr;
 
-  WINDOW* classic_aco_win = nullptr;
-  WINDOW* parallel_aco_win = nullptr;
+  WINDOW* classic_res_win = nullptr;
+  WINDOW* parallel_res_win = nullptr;
 
   setlocale(LC_ALL, "");
 
@@ -92,7 +75,7 @@ void Console::Run() {
   menu_win = newwin(choices.size() + 2, maxx, 0, 0);
   keypad(menu_win, TRUE); /* enable to use ARROW BUTNS in menu window */
 
-  print_menu(menu_win, highlight, choices);
+  PrintMenu(menu_win, highlight, choices);
   while (1) {
     noecho();
     int c = wgetch(menu_win);
@@ -114,7 +97,7 @@ void Console::Run() {
         break;
     }
 
-    print_menu(menu_win, highlight, choices);
+    PrintMenu(menu_win, highlight, choices);
 
     if (choice != NO_ACTION) {
       echo();
@@ -124,7 +107,7 @@ void Console::Run() {
       // delete old input from cursos to the end of line
       wclrtoeol(menu_win);
       // remove the highlight
-      print_menu(menu_win, 0, choices);
+      PrintMenu(menu_win, 0, choices);
 
       wattron(menu_win, A_BOLD);
 
@@ -135,15 +118,14 @@ void Console::Run() {
             mvwscanw(menu_win, choice, 1 + choices[choice - 1].size() + 1, "%s", filepath);
             path = std::string(filepath);
             try {
-              delete matrix;
-              matrix = new SimpleMatrix(path);
+              matrix.LoadGraphFromFile(path);
 
               // if win already has content -> clear to avoid text overlay
               if (matr_win) {
                 delwin(matr_win);
               }
-              matr_win = newwin(matrix->get_rows() + 2, matrix->get_cols() * 6,
-                                          12, maxx / 2 - matrix->get_cols() * 2);
+              matr_win = newwin(matrix.get_rows() + 2, matrix.get_cols() * 6,
+                                          12, maxx / 2 - matrix.get_cols() * 2);
 
               print_graph(matr_win, matrix);
             } catch (const std::exception& e) {
@@ -165,41 +147,42 @@ void Console::Run() {
           {
             if (exec_num < 1) break;
 
-              if (classic_aco_win) delwin(classic_aco_win);
-              classic_aco_win = newwin(5, maxx / 2, maxy - 6, 0);
+              if (classic_res_win) delwin(classic_res_win);
+              classic_res_win = newwin(5, maxx / 2, maxy - 6, 0);
 
-              if (parallel_aco_win) delwin(parallel_aco_win);
-              parallel_aco_win = newwin(5, maxx / 2, maxy - 6, maxx / 2);
+              if (parallel_res_win) delwin(parallel_res_win);
+              parallel_res_win = newwin(5, maxx / 2, maxy - 6, maxx / 2);
 
               try {
                 std::vector<double> solution;
-                int opt = GaussMethod::Gauss::Solve(*matrix, solution);
+                int opt = GaussMethod::Gauss::Solve(matrix, solution);
                 int executions = exec_num;
 
                 if (opt != GaussMethod::Gauss::ONE) {
-                  print_result_error_window(classic_aco_win, opt);
-                  print_result_error_window(parallel_aco_win, opt);
+                  print_result_error_window(classic_res_win, opt);
+                  print_result_error_window(parallel_res_win, opt);
                 } else {
                   auto t1 = std::chrono::high_resolution_clock::now();
+
                   while (executions--) {
-                    GaussMethod::Gauss::Solve(*matrix, solution);
+                    GaussMethod::Gauss::Solve(matrix, solution);
                   }
+
                   auto t2 = std::chrono::high_resolution_clock::now();
-
                   std::chrono::duration<double, std::milli> ms_double = t2 - t1;
+                  print_result_window(classic_res_win, solution, ms_double.count());
 
-                  print_result_window(classic_aco_win, solution, ms_double.count());
 
                   executions = exec_num;
 
                   auto t3 = std::chrono::high_resolution_clock::now();
                   while (executions--) {
-                    GaussMethod::Gauss::Solve(*matrix, solution);
+                    GaussMethod::Gauss::ParallelSolve(matrix, solution);
                   }
                   auto t4 = std::chrono::high_resolution_clock::now();
                   ms_double = t4 - t3;
 
-                  print_result_window(parallel_aco_win, solution, ms_double.count());
+                  print_result_window(parallel_res_win, solution, ms_double.count());
                 }
               } catch (const std::exception& e) {
 
@@ -207,7 +190,7 @@ void Console::Run() {
           }
       }
       wattroff(menu_win, A_BOLD);
-      print_menu(menu_win, highlight, choices);
+      PrintMenu(menu_win, highlight, choices);
       noecho();
     }
 

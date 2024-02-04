@@ -1,0 +1,85 @@
+#ifndef SIMPLE_GRAPH_H_
+#define SIMPLE_GRAPH_H_
+
+#include <fstream>
+#include <string>
+#include <vector>
+
+template<typename T>
+class SimpleGraph {
+ private:
+  struct ProxyRow {
+    ProxyRow(T* r) : row{r} {};
+    ProxyRow(const T* r) : row{const_cast<T*>(r)} {};
+
+    T* row;
+    T& operator[](int n) { return row[n]; }
+    const T& operator[](int n) const { return row[n]; }
+  };
+
+  bool Directed() const noexcept;
+
+ public:
+  SimpleGraph() : adjacent_{}, rows{0}, cols{0} /* directed{false} */ {}
+
+  void LoadGraphFromFile(const std::string& filename) {
+    std::ifstream istrm;
+    istrm.open(filename, std::ios_base::in);
+
+    if (!istrm.is_open())
+      throw std::invalid_argument("Can not open file " + filename);
+
+    istrm >> rows >> cols;
+
+    adjacent_.resize(rows * cols);
+
+    for (std::size_t i = 0; i < adjacent_.size(); ++i) {
+      istrm >> adjacent_[i];
+    }
+
+    /* directed = Directed(); */
+
+    istrm.close();
+  }
+
+
+  /* bool IsDirect() const noexcept { return directed; } */
+
+  bool Empty() const noexcept { return adjacent_.empty(); }
+
+  int Size() const noexcept { return rows; }
+
+  void SwapRows(int r1, int r2) {
+    if (!(r1 < rows && r2 < rows) || !(r1 >= 0 && r2 >= 0))
+      throw std::range_error("incorrect row");
+
+    if (r1 == r2)
+      return;
+    
+    for (int j = 0; j != cols; ++j)
+      std::swap(adjacent_[r1 * cols + j], adjacent_[r2 * cols + j]);
+  }
+
+  int get_rows() const { return rows; }
+  int get_cols() const { return cols; }
+
+ public:
+  /* friend std::ostream& operator<<(std::ostream& os, const ACO& g); */
+
+  ProxyRow operator[](int row) {
+    return adjacent_.data() + row * cols;
+  }
+
+  const ProxyRow operator[](int row) const {
+    return adjacent_.data() + row * cols;
+  }
+
+ private:
+  std::vector<T> adjacent_;
+  int rows;
+  int cols;
+  /* bool directed; */
+
+};
+
+#endif // SIMPLE_GRAPH_H_
