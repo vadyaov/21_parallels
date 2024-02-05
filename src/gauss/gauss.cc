@@ -75,28 +75,27 @@ int Gauss::Solve(SimpleGraph<double> matr, std::vector<double>& answer) {
   return ONE;
 }
 
-struct StraightWay {
+struct ForwardTask {
   SimpleGraph<double>& matr;
-  std::vector<int>& where;
+  int row, col;
 
-  StraightWay(SimpleGraph<double>& m, std::vector<int>& wh) :
-    matr{m}, where{wh} {}
+  void operator()(int i) {
+    double coef = matr[i][col] / matr[row][col];
+    for (int j = col; j != matr.get_cols(); ++j) {
+      matr[i][j] -= matr[row][j] * coef;
+    }
+  }
+};
 
-  void operator()(int& row, int col) {
-        try {
-          matr.SwapRows(row, FindPivotRow(matr, row, col));
-        } catch (...) {
-          return;
-        }
-        where[col] = row;
+struct BackwardTask {
+  SimpleGraph<double>& matr;
+  int row;
 
-      for (int i = row + 1; i != matr.get_rows(); ++i) {
-        auto coef = matr[i][col] / matr[row][col];
-        for (int j = col; j <= matr.get_cols() - 1; ++j) {
-          matr[i][j] -= matr[row][j] * coef;
-        }
-      }
-      ++row;
+  void operator()(int i) {
+    double K = matr[i][row] / matr[row][row];
+    for (int j = matr.get_cols() - 1; j >= 0; --j) {
+      matr[i][j] -= matr[row][j] * K;
+    }
   }
 };
 
@@ -105,18 +104,26 @@ int Gauss::ParallelSolve(SimpleGraph<double> matr, std::vector<double>& answer) 
   const int m = matr.get_cols() - 1;
 
   std::vector<std::thread> threads;
-  std::mutex matr_mtx;
 
   std::vector<int> where(m, -1);
-  StraightWay stw(matr, where);
-  for (int row = 0, col = 0; col < m; ++col) {
-    matr_mtx.lock();
-    threads.push_back(std::thread(stw, std::ref(row), col));
-    matr_mtx.unlock();
-  }
+  for (int row = 0, col = 0; row < n && col < m; ++col) {
+      try {
+        matr.SwapRows(row, FindPivotRow(matr, row, col));
+      } catch (...) {
+        continue;
+      }
+      where[col] = row;
 
-  for (auto& th : threads)
-    th.join();
+    ForwardTask t{matr, row, col};
+    for (int i = row + 1; i != n; ++i) {
+      threads.emplace_back(t, i);
+    }
+
+    for (auto& th : threads) th.join();
+    threads.clear();
+
+    ++row;
+  }
 
   answer.assign(m, 0);
   for (int row = n - 1; row >= 0; --row) {
@@ -132,12 +139,13 @@ int Gauss::ParallelSolve(SimpleGraph<double> matr, std::vector<double>& answer) 
     for (int col = matr.get_cols() - 1; col >= 0; --col)
       matr[row][col] /= matr[row][row];
 
+    BackwardTask t{matr, row};
     for (int i = row - 1; i >= 0; --i) {
-      double K = matr[i][row] / matr[row][row];
-      for (int j = matr.get_cols() - 1; j >= 0; --j) {
-        matr[i][j] = matr[i][j] - matr[row][j] * K;
-      }
+      threads.emplace_back(t, i);
     }
+
+    for (auto& th : threads) th.join();
+    threads.clear();
 
   }
 

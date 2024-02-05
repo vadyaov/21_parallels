@@ -21,6 +21,7 @@ class SimpleGraph {
 
  public:
   SimpleGraph() : adjacent_{}, rows{0}, cols{0} /* directed{false} */ {}
+  SimpleGraph(int r, int c) : adjacent_(r * c), rows{r}, cols{c} {}
 
   void LoadGraphFromFile(const std::string& filename) {
     std::ifstream istrm;
@@ -64,7 +65,6 @@ class SimpleGraph {
   int get_cols() const { return cols; }
 
  public:
-  /* friend std::ostream& operator<<(std::ostream& os, const ACO& g); */
 
   ProxyRow operator[](int row) {
     return adjacent_.data() + row * cols;
@@ -74,6 +74,15 @@ class SimpleGraph {
     return adjacent_.data() + row * cols;
   }
 
+  void dump(std::ostream& os) const {
+    for (int i = 0; i != rows; ++i) {
+      for (int j = 0; j != cols; ++j) {
+        os << adjacent_[i * cols + j] << " ";
+      }
+      os << "\n";
+    }
+  }
+
  private:
   std::vector<T> adjacent_;
   int rows;
@@ -81,5 +90,11 @@ class SimpleGraph {
   /* bool directed; */
 
 };
+
+template<typename T>
+inline std::ostream& operator<<(std::ostream& os, const SimpleGraph<T>& g) {
+  g.dump(os);
+  return os;
+}
 
 #endif // SIMPLE_GRAPH_H_
