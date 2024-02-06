@@ -1,7 +1,8 @@
 CXX = g++
 CXXFLAGS = -Wall -Werror -Wextra -Wpedantic -std=c++17 #-fsanitize=address -g
+GAUSS_DIR := gauss
+GAUSS_SRCS := $(addprefix $(GAUSS_DIR)/, app.cc console.cc gauss.cc)
 
-ANT_SRCS = s21_graph.cc
 
 # GCOV_TARGET = ./coverage
 # COVERFLAGS = -fprofile-arcs -ftest-coverage
@@ -28,7 +29,7 @@ aco:
 	./ant.out
 
 gauss:
-	$(CXX) $(CXXFLAGS) gauss/*cc -lncursesw -ltinfo -o gauss.out
+	$(CXX) $(CXXFLAGS) $(GAUSS_SRCS) -lncursesw -ltinfo -o gauss.out
 	./gauss.out
 
 # s21_graph.a: $(GRAPH_OBJ)

@@ -28,6 +28,7 @@ void print_result_window(WINDOW* output, const std::vector<double>& res, double 
       x = 1;
       ++y;
     }
+    if (y == 2) break;
   }
   x = 1;
   mvwprintw(output, ++y, x, "Execution time = %lf ms", ms);

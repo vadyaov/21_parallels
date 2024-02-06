@@ -6,14 +6,12 @@ SimpleGraph<double> Winograd::Multiply(const SimpleGraph<double>& g,
                                        const SimpleGraph<double>& h) {
   if (g.get_cols() != h.get_rows())
     throw std::invalid_argument("Incorrect matrix size for miltiplication");
+
   int a = g.get_rows();
   int b = g.get_cols();
   int c = h.get_cols();
 
   int d = b / 2;
-
-  std::cout << "a = " << a << "\nb = " << b << "\nc = " << c << "\n";
-
   std::vector<double> rowFactor(a);
   // вычисление rowFactors для G
   for (int i = 0; i != a; ++i) {
@@ -32,10 +30,7 @@ SimpleGraph<double> Winograd::Multiply(const SimpleGraph<double>& g,
     }
   }
 
-  std::cout << "I'm here\n";
-
   SimpleGraph<double> r(a, c);
-  std::cout << "I'm here\n";
   // вычисление матрицы R
   for (int i = 0; i != a; ++i) {
     for (int j = 0; j != c; ++j) {

@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
   if (argc < 2) return -1;
 
   for (int i = 1; i < argc; ++i)
-    CreateRandomMatrix(20, 21, argv[i]);
+    CreateRandomMatrix(50, 51, argv[i]);
 
   return 0;
 }
