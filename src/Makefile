@@ -1,7 +1,13 @@
 CXX = g++
-CXXFLAGS = -Wall -Werror -Wextra -Wpedantic -std=c++17 #-fsanitize=address -g
+CXXFLAGS = -Wall -Werror -Wextra -Wpedantic -std=c++17 -fsanitize=address -g
+
+ANT_DIR := aco
 GAUSS_DIR := gauss
+WINOGRAD_DIR := winograd
+
+ANT_SRCS := $(addprefix $(ANT_DIR)/, app.cc console.cc ant.cc)
 GAUSS_SRCS := $(addprefix $(GAUSS_DIR)/, app.cc console.cc gauss.cc)
+WINOGRAD_SRCS := $(addprefix $(WINOGRAD_DIR)/, app.cc console.cc winograd.cc)
 
 
 # GCOV_TARGET = ./coverage
@@ -25,12 +31,16 @@ all: aco gauss #test
 # 	open ./coverage_report/index.html
 #
 aco:
-	$(CXX) $(CXXFLAGS) aco/*.cc -lncursesw -ltinfo -o ant.out
+	$(CXX) $(CXXFLAGS) $(ANT_SRCS) -lncursesw -ltinfo -o ant.out
 	./ant.out
 
 gauss:
 	$(CXX) $(CXXFLAGS) $(GAUSS_SRCS) -lncursesw -ltinfo -o gauss.out
 	./gauss.out
+
+winograd:
+	$(CXX) $(CXXFLAGS) $(WINOGRAD_SRCS) -lncursesw -ltinfo -o winograd.out
+	./winograd.out
 
 # s21_graph.a: $(GRAPH_OBJ)
 # 	ar -rcs $@ $< 
@@ -51,4 +61,4 @@ gauss:
 clean:
 	rm -f *.out
 
-.PHONY: aco gauss
+.PHONY: aco gauss winograd

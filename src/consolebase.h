@@ -7,17 +7,13 @@
 
 class BaseConsole {
   public:
-    enum Action { NO_ACTION = 0, LOAD, EXEC_NUM, RUN, EXIT };
-
     BaseConsole() : exec_num{0} {}
 
     virtual ~BaseConsole() {}
 
     virtual void Run() = 0;
 
-    virtual void PrintGraph(WINDOW* graph_win) = 0;
-
-    virtual void PrintMenu(WINDOW* menu_win, int highlight,
+    void PrintMenu(WINDOW* menu_win, int highlight,
                               const std::vector<std::string>& choices) {
       int x = 1, y = 1;
 

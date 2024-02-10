@@ -15,7 +15,7 @@ void CreateRandomMatrix(int rows, int cols, const std::string& name) {
   ostrm << rows << " " << cols << "\n";
   for (int i = 0; i < rows; ++i) {
     for (int j = 0; j < cols; ++j) {
-      ostrm << RandomValue(1, 100) << " ";
+      ostrm << RandomValue(10, 50) << " ";
     }
     ostrm << "\n";
   }
@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
   if (argc < 2) return -1;
 
   for (int i = 1; i < argc; ++i)
-    CreateRandomMatrix(50, 51, argv[i]);
+    CreateRandomMatrix(64, 64, argv[i]);
 
   return 0;
 }

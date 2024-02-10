@@ -83,6 +83,10 @@ class SimpleGraph {
     }
   }
 
+  bool IsEqual(const SimpleGraph<T>& gr) const {
+    return rows == gr.rows && cols == gr.cols && adjacent_ == gr.adjacent_;
+  }
+
  private:
   std::vector<T> adjacent_;
   int rows;
@@ -95,6 +99,11 @@ template<typename T>
 inline std::ostream& operator<<(std::ostream& os, const SimpleGraph<T>& g) {
   g.dump(os);
   return os;
+}
+
+template<typename T>
+bool operator==(const SimpleGraph<T>& lhs, const SimpleGraph<T>& rhs) {
+  return lhs.IsEqual(rhs);
 }
 
 #endif // SIMPLE_GRAPH_H_
