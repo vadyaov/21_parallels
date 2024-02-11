@@ -30,6 +30,15 @@ class BaseConsole {
       wrefresh(menu_win);
     }
 
+    void wClear(WINDOW* win, int from, int to) {
+      while (from <= to) {
+        wmove(win, from, 0);
+        wclrtoeol(win);
+        ++from;
+      }
+      wrefresh(win);
+    }
+
   protected:
     std::string path;
     int exec_num;

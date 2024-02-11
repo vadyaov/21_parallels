@@ -21,7 +21,14 @@ class SimpleGraph {
 
  public:
   SimpleGraph() : adjacent_{}, rows{0}, cols{0} /* directed{false} */ {}
-  SimpleGraph(int r, int c) : adjacent_(r * c), rows{r}, cols{c} {}
+  SimpleGraph(int r, int c) {
+    if (r < 2 || c < 2)
+      throw std::invalid_argument("please, create matrices, not rows or smth");
+
+    adjacent_.resize(r * c);
+    rows = r;
+    cols = c;
+  }
 
   void LoadGraphFromFile(const std::string& filename) {
     std::ifstream istrm;

@@ -10,10 +10,15 @@ SimpleGraph<double> Winograd::Multiply(const SimpleGraph<double>& g,
 
   int a = g.get_rows();
   int b = g.get_cols();
-  int c = h.get_cols();
 
+  int c = h.get_cols();
   int d = b / 2;
+
   std::vector<double> rowFactor(a);
+  std::vector<double> columnFactor(c);
+
+  SimpleGraph<double> r(a, c);
+
   // вычисление rowFactors для G
   for (int i = 0; i != a; ++i) {
     rowFactor[i] = g[i][0] * g[i][1];
@@ -22,7 +27,6 @@ SimpleGraph<double> Winograd::Multiply(const SimpleGraph<double>& g,
     }
   }
 
-  std::vector<double> columnFactor(c);
   // вычисление columnFactor для H
   for (int i = 0; i != c; ++i) {
     columnFactor[i] = h[0][i] * h[1][i];
@@ -31,7 +35,6 @@ SimpleGraph<double> Winograd::Multiply(const SimpleGraph<double>& g,
     }
   }
 
-  SimpleGraph<double> r(a, c);
   // вычисление матрицы R
   for (int i = 0; i != a; ++i) {
     for (int j = 0; j != c; ++j) {
@@ -59,10 +62,9 @@ SimpleGraph<double> Winograd::AsyncMultiply(const SimpleGraph<double>& g,
   if (g.get_cols() != h.get_rows())
     throw std::invalid_argument("Incorrect matrix size for miltiplication");
 
-  /* const int threads_num = std::thread::hardware_concurrency(); // 12 */
-
   int a = g.get_rows();
   int b = g.get_cols();
+
   int c = h.get_cols();
   int d = b / 2;
 
@@ -72,35 +74,20 @@ SimpleGraph<double> Winograd::AsyncMultiply(const SimpleGraph<double>& g,
   SimpleGraph<double> r(a, c);
 
   std::thread row_fact_thread(RowFactorCompute, std::cref(g), std::ref(rowFactor), a, d);
-  std::thread col_fact_thread(ColFactorCompute, std::cref(g), std::ref(colFactor), c, d);
-  /* // вычисление rowFactors для G */
-  /* for (int i = 0; i != a; ++i) { */
-  /*   rowFactor[i] = g[i][0] * g[i][1]; */
-  /*   for (int j = 1; j != d; ++j) { */
-  /*     rowFactor[i] += g[i][2 * j] * g[i][2 * j + 1]; */
-  /*   } */
-  /* } */
-
-  /* // вычисление columnFactor для H */
-  /* for (int i = 0; i != c; ++i) { */
-  /*   colFactor[i] = h[0][i] * h[1][i]; */
-  /*   for (int j = 1; j != d; ++j) { */
-  /*     colFactor[i] += h[2 * j][i] * h[2 * j + 1][i]; */
-  /*   } */
-  /* } */
+  std::thread col_fact_thread(ColFactorCompute, std::cref(h), std::ref(colFactor), c, d);
 
   row_fact_thread.join();
   col_fact_thread.join();
 
+  // прибавление членов в случае нечетной общей размерности
   std::thread ifeven_thread([=, &r, &g, &h]() {
-        if (2 * d != b) {
-          for (int i = 0; i != a; ++i) { 
-            for (int j = 0; j != c; ++j) {
-              r[i][j] += g[i][b - 1] * h[b - 1][j];
-            }
+      if (2 * d != b) {
+        for (int i = 0; i != a; ++i) { 
+          for (int j = 0; j != c; ++j) {
+            r[i][j] += g[i][b - 1] * h[b - 1][j];
           }
         }
-      });
+      }});
 
   // вычисление матрицы R
   for (int i = 0; i != a; ++i) {
@@ -113,8 +100,6 @@ SimpleGraph<double> Winograd::AsyncMultiply(const SimpleGraph<double>& g,
   }
 
   ifeven_thread.join();
-
-  // прибавление членов в случае нечетной общей размерности
 
   return r;
 }

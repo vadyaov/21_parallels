@@ -1,6 +1,8 @@
 #ifndef WINOGRAD_H_
 #define WINOGRAD_H_
 
+#include <iostream>
+
 #include "../simplegraph.h"
 
 class Winograd {
@@ -12,20 +14,20 @@ class Winograd {
 
   private:
     static void RowFactorCompute(const SimpleGraph<double>& g,
-                           std::vector<double>& row_fact, int r, int c) {
-      for (int i = 0; i != r; ++i) {
+                           std::vector<double>& row_fact, int row, int col) {
+      for (int i = 0; i != row; ++i) {
         row_fact[i] = g[i][0] * g[i][1];
-        for (int j = 1; j != c; ++j) {
+        for (int j = 1; j != col; ++j) {
           row_fact[i] += g[i][2 * j] * g[i][2 * j + 1];
         }
       }
     }
 
     static void ColFactorCompute(const SimpleGraph<double>& h,
-                           std::vector<double>& col_fact, int r, int c) {
-      for (int i = 0; i != r; ++i) {
+                           std::vector<double>& col_fact, int row, int col) {
+      for (int i = 0; i != row; ++i) {
         col_fact[i] = h[0][i] * h[1][i];
-        for (int j = 1; j != c; ++j) {
+        for (int j = 1; j != col; ++j) {
           col_fact[i] += h[2 * j][i] * h[2 * j + 1][i];
         }
       }
