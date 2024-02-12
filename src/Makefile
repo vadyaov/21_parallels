@@ -39,8 +39,12 @@ gauss:
 	./gauss.out
 
 winograd:
-	$(CXX) $(CXXFLAGS) $(WINOGRAD_SRCS) -lncursesw -ltinfo -o winograd.out
-	./winograd.out
+	$(CXX) $(CXXFLAGS) -c winograd/winograd.cc -o winograd/winograd.o -fopenmp
+	$(CXX) $(CXXFLAGS) -c winograd/app.cc -o winograd/app.o -lncursesw -ltinfo
+	$(CXX) $(CXXFLAGS) -c winograd/console.cc -o winograd/console.o -lncursesw -ltinfo
+	$(CXX) $(CXXFLAGS) winograd/app.o winograd/console.o winograd/winograd.o -o winograd.out -fopenmp -lpthread -lncursesw -ltinfo
+
+	
 
 # s21_graph.a: $(GRAPH_OBJ)
 # 	ar -rcs $@ $< 

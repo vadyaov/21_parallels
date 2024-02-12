@@ -10,7 +10,8 @@ class Winograd {
     static SimpleGraph<double> Multiply(const SimpleGraph<double>& g,
                                         const SimpleGraph<double>& h);
     static SimpleGraph<double> AsyncMultiply(const SimpleGraph<double>& g,
-                                             const SimpleGraph<double>& h);
+                                             const SimpleGraph<double>& h,
+                                             int num_threads);
 
   private:
     static void RowFactorCompute(const SimpleGraph<double>& g,

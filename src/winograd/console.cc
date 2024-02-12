@@ -247,16 +247,11 @@ void Console::Run() {
                 executions = exec_num;
                 auto t3 = std::chrono::high_resolution_clock::now();
                 while (executions--) {
-                  async_result = Winograd::AsyncMultiply(mtrxs.first, mtrxs.second);
+                  async_result = Winograd::AsyncMultiply(mtrxs.first, mtrxs.second, 4);
                 }
 
                 auto t4 = std::chrono::high_resolution_clock::now();
                 ms_double = t4 - t3;
-
-                /* if (async_matr_win) delwin(async_matr_win); */
-                /* async_matr_win = newwin(async_result.get_rows() + 2, maxx, 10 + result.get_rows() + 3, 0); */
-                /* PrintResMatrix(async_matr_win, async_result); */
-
 
                 print_result_window(parallel_res_win, ms_double.count());
             } catch (const std::exception& e) {
