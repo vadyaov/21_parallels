@@ -58,8 +58,8 @@ void print_result_window(WINDOW* output, double ms) {
 }
 
 void print_error_window(WINDOW* output, const char * msg) {
-  /* box(output, 0, 0); */
-  mvwprintw(output, 0, 0, "%s", msg);
+  box(output, 0, 0);
+  mvwprintw(output, 1, 1, "%s", msg);
   wrefresh(output);
 }
 
@@ -77,6 +77,7 @@ void Console::Run() {
       "Select .txt files with 1st & 2nd matrices (path1 path2):",
       "Generate random matrices with size (r1 c1 r2 c2):",
       "Show matrix (lhs: 0, rhs: 1, res: 2, async_res: 3):",
+      "Input number of threads to use:",
       "Input number of executions (N):",
       "RUN",
       "Exit"};
@@ -214,6 +215,11 @@ void Console::Run() {
             }
             break;
           }
+        case THREAD_NUM:
+          {
+            mvwscanw(menu_win, choice, 1 + choices[choice - 1].size() + 1, "%d", &threads_num);
+            break;
+          }
         case EXEC_NUM:
           {
             mvwscanw(menu_win, choice, 1 + choices[choice - 1].size() + 1, "%d", &exec_num);
@@ -224,7 +230,7 @@ void Console::Run() {
           }
         case RUN:
           {
-            if (exec_num < 1) break;
+            if (exec_num < 1 || threads_num < 1) break;
 
             if (classic_res_win) delwin(classic_res_win);
             classic_res_win = newwin(5, maxx / 2, maxy - 6, 0);
@@ -232,9 +238,9 @@ void Console::Run() {
             if (parallel_res_win) delwin(parallel_res_win);
             parallel_res_win = newwin(5, maxx / 2, maxy - 6, maxx / 2);
 
+            int executions = exec_num;
             try {
                 auto t1 = std::chrono::high_resolution_clock::now();
-                int executions = exec_num;
 
                 while (executions--) {
                   result = Winograd::Multiply(mtrxs.first, mtrxs.second);
@@ -243,19 +249,21 @@ void Console::Run() {
                 auto t2 = std::chrono::high_resolution_clock::now();
                 std::chrono::duration<double, std::milli> ms_double = t2 - t1;
                 print_result_window(classic_res_win, ms_double.count());
+            } catch (const std::exception& e) {
+              print_error_window(classic_res_win, e.what());
+            }
 
-                executions = exec_num;
+            executions = exec_num;
+            try {
                 auto t3 = std::chrono::high_resolution_clock::now();
                 while (executions--) {
-                  async_result = Winograd::AsyncMultiply(mtrxs.first, mtrxs.second, 4);
+                  async_result = Winograd::AsyncMultiply(mtrxs.first, mtrxs.second, threads_num);
                 }
 
                 auto t4 = std::chrono::high_resolution_clock::now();
-                ms_double = t4 - t3;
-
+                std::chrono::duration<double, std::milli> ms_double = t4 - t3;
                 print_result_window(parallel_res_win, ms_double.count());
             } catch (const std::exception& e) {
-              print_error_window(classic_res_win, e.what());
               print_error_window(parallel_res_win, e.what());
             }
           }
