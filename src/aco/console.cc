@@ -57,14 +57,6 @@ void Console::Run() {
   int highlight = 1;
   int choice = NO_ACTION;
 
-  initscr();
-  clear();
-  cbreak(); /* Line buffering disabled. pass on everything */
-  curs_set(0);
-
-  const int maxx = getmaxx(stdscr);
-  const int maxy = getmaxy(stdscr);
-
   menu_win = newwin(choices.size() + 2, maxx, 0, 0);
   keypad(menu_win, TRUE); /* enable to use ARROW BUTNS in menu window */
 
@@ -155,11 +147,9 @@ void Console::Run() {
                     classic_res = tmp;
                 }
                 auto t2 = std::chrono::high_resolution_clock::now();
-                /* auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1); */
                 std::chrono::duration<double, std::milli> ms_double = t2 - t1;
 
                 print_result_window(classic_aco_win, classic_res, ms_double.count());
-
 
                 auto parallel_res = AntColony::ParallelSolve(g, 25);
                 executions = exec_num;
@@ -170,7 +160,6 @@ void Console::Run() {
                     parallel_res = tmp;
                 }
                 t2 = std::chrono::high_resolution_clock::now();
-                /* ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1); */
                 ms_double = t2 - t1;
 
                 print_result_window(parallel_aco_win, parallel_res, ms_double.count());
@@ -191,6 +180,7 @@ void Console::Run() {
   }
 
   delwin(menu_win);
-  /* clrtoeol(); */
-  endwin();
+  delwin(matr_win);
+  delwin(classic_aco_win);
+  delwin(parallel_aco_win);
 }

@@ -7,9 +7,21 @@
 
 class BaseConsole {
   public:
-    BaseConsole() : exec_num{0} {}
+    int maxx, maxy;
 
-    virtual ~BaseConsole() {}
+    BaseConsole() : exec_num{0} {
+      initscr();
+      maxx = getmaxx(stdscr);
+      maxy = getmaxy(stdscr);
+      clear();
+      cbreak(); /* Line buffering disabled. pass on everything */
+      curs_set(0);
+    }
+
+    virtual ~BaseConsole() {
+      clrtoeol();
+      endwin();
+    }
 
     virtual void Run() = 0;
 

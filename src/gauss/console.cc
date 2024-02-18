@@ -65,14 +65,6 @@ void Console::Run() {
   int highlight = 1;
   int choice = NO_ACTION;
 
-  initscr();
-  clear();
-  cbreak(); /* Line buffering disabled. pass on everything */
-  curs_set(0);
-
-  const int maxx = getmaxx(stdscr);
-  const int maxy = getmaxy(stdscr);
-
   menu_win = newwin(choices.size() + 2, maxx, 0, 0);
   keypad(menu_win, TRUE); /* enable to use ARROW BUTNS in menu window */
 
@@ -201,6 +193,7 @@ void Console::Run() {
   }
 
   delwin(menu_win);
-  /* clrtoeol(); */
-  endwin();
+  delwin(matr_win);
+  delwin(classic_res_win);
+  delwin(parallel_res_win);
 }

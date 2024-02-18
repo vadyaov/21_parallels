@@ -43,7 +43,7 @@ winograd:
 	$(CXX) $(CXXFLAGS) -c winograd/app.cc -o winograd/app.o -lncursesw -ltinfo
 	$(CXX) $(CXXFLAGS) -c winograd/console.cc -o winograd/console.o -lncursesw -ltinfo
 	$(CXX) $(CXXFLAGS) winograd/app.o winograd/console.o winograd/winograd.o -o winograd.out -fopenmp -lpthread -lncursesw -ltinfo
-
+	./winograd.out
 	
 
 # s21_graph.a: $(GRAPH_OBJ)
