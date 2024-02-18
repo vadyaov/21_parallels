@@ -1,21 +1,24 @@
 #include "console.h"
-#include "winograd.h"
 
 #include <chrono>
-#include <sstream>
 #include <functional>
+#include <sstream>
+
+#include "winograd.h"
 
 SimpleGraph<double> RandomMatrix(int rows, int cols);
 bool Printable(const Console::d_graph& gr, int xmax, int ymax);
 void print_result_window(WINDOW* output, double ms);
-void print_error_window(WINDOW* output, const char * msg);
+void print_error_window(WINDOW* output, const char* msg);
 
-template<typename Function, typename... Args>
-double RunMultiplication(int exec_num, Console::d_graph& result, Function&& func, Args&&... args) {
+template <typename Function, typename... Args>
+double RunMultiplication(int exec_num, Console::d_graph& result,
+                         Function&& func, Args&&... args) {
   auto t1 = std::chrono::high_resolution_clock::now();
 
   while (exec_num--) {
-      result = std::invoke(std::forward<Function>(func), std::forward<Args>(args)...);
+    result =
+        std::invoke(std::forward<Function>(func), std::forward<Args>(args)...);
   }
 
   auto t2 = std::chrono::high_resolution_clock::now();
@@ -81,60 +84,64 @@ void Console::Run() {
           ShowProcess(menu_win, matr_win, err_win);
           break;
         case THREAD_NUM:
-          mvwscanw(menu_win, choice, 1 + choices[choice - 1].size() + 1, "%d", &threads_num);
+          mvwscanw(menu_win, choice, 1 + choices[choice - 1].size() + 1, "%d",
+                   &threads_num);
           break;
         case EXEC_NUM:
-          mvwscanw(menu_win, choice, 1 + choices[choice - 1].size() + 1, "%d", &exec_num);
+          mvwscanw(menu_win, choice, 1 + choices[choice - 1].size() + 1, "%d",
+                   &exec_num);
           if (exec_num < 1)
-            mvwprintw(menu_win, choice, 1 + choices[choice - 1].size() + 1, "%d is invalid", exec_num);
+            mvwprintw(menu_win, choice, 1 + choices[choice - 1].size() + 1,
+                      "%d is invalid", exec_num);
           break;
-        case RUN_1: // run classic and parallel with 'n' threads
-          {
+        case RUN_1:  // run classic and parallel with 'n' threads
+        {
           if (exec_num < 1 || threads_num < 1) break;
 
           if (classic_res_win) delwin(classic_res_win);
           classic_res_win = newwin(5, maxx / 2, maxy - 6, 0);
           try {
-            double cl_time = RunMultiplication(exec_num, result,
-                                  &Winograd::Multiply, mtrxs.first, mtrxs.second);
+            double cl_time =
+                RunMultiplication(exec_num, result, &Winograd::Multiply,
+                                  mtrxs.first, mtrxs.second);
             print_result_window(classic_res_win, cl_time);
           } catch (const std::exception& e) {
             print_error_window(classic_res_win, e.what());
           }
 
           break;
-          }
-        case RUN_2: // run classic and pipeline parallel
-          {
+        }
+        case RUN_2:  // run classic and pipeline parallel
+        {
           if (exec_num < 1 || threads_num < 1) break;
 
           if (parallel_res_win) delwin(parallel_res_win);
           parallel_res_win = newwin(5, maxx / 2, maxy - 6, maxx / 2);
           try {
-            double pr_time = RunMultiplication(exec_num, async_result,
-                              &Winograd::AsyncMultiply, mtrxs.first, mtrxs.second,
-                              threads_num);
+            double pr_time = RunMultiplication(
+                exec_num, async_result, &Winograd::AsyncMultiply, mtrxs.first,
+                mtrxs.second, threads_num);
             print_result_window(parallel_res_win, pr_time);
           } catch (const std::exception& e) {
             print_error_window(parallel_res_win, e.what());
           }
 
           break;
-          }
-        case RUN_3:
-          {
-            if (parallel_res_win) delwin(parallel_res_win);
-            parallel_res_win = newwin(5, maxx / 2, maxy - 6, maxx / 2);
+        }
+        case RUN_3: {
+          if (parallel_res_win) delwin(parallel_res_win);
+          parallel_res_win = newwin(5, maxx / 2, maxy - 6, maxx / 2);
 
-            try {
-              double pr_time = RunMultiplication(exec_num, result,
-                                  &Winograd::AsyncPipelineMultiply, mtrxs.first, mtrxs.second);
-                print_result_window(parallel_res_win, pr_time);
-            } catch (const std::exception& e) {
-              print_error_window(parallel_res_win, e.what());
-            }
-            break;
+          try {
+            double pr_time = RunMultiplication(exec_num, result,
+                                               &Winograd::AsyncPipelineMultiply,
+                                               mtrxs.first, mtrxs.second);
+            print_result_window(parallel_res_win, pr_time);
+          } catch (const std::exception& e) {
+            print_error_window(parallel_res_win, e.what());
           }
+          break;
+        }
       }
       wattroff(menu_win, A_BOLD);
       PrintMenu(menu_win, highlight, choices);
@@ -166,7 +173,7 @@ void Console::LoadMatrices(WINDOW* menu) {
   } catch (const std::exception& e) {
     wmove(menu, LOAD, 1 + choices[LOAD - 1].size() + 1);
     wclrtoeol(menu);
-    mvwprintw(menu, LOAD, 1 + choices[LOAD - 1].size() + 1, "%s ", e.what()); 
+    mvwprintw(menu, LOAD, 1 + choices[LOAD - 1].size() + 1, "%s ", e.what());
   }
 }
 
@@ -182,7 +189,7 @@ void Console::GenerateMatrices(WINDOW* menu) {
 }
 
 void Console::ShowMatrix(const d_graph& mtr, WINDOW* matr, WINDOW* err) {
-  matr= newwin(mtr.get_rows() + 2, maxx, 10, 0);
+  matr = newwin(mtr.get_rows() + 2, maxx, 10, 0);
   if (!Printable(mtr, maxx, maxy - (choices.size() + 2) - 7)) {
     print_error_window(err, "Matrix is too big for correct printing");
   }
@@ -200,7 +207,7 @@ void Console::ShowProcess(WINDOW* menu, WINDOW* matr, WINDOW* err) {
   sstr >> matr_num;
 
   if (matr) delwin(matr);
-  switch(matr_num) {
+  switch (matr_num) {
     case FIRST:
       ShowMatrix(mtrxs.first, matr, err);
       break;
@@ -208,15 +215,14 @@ void Console::ShowProcess(WINDOW* menu, WINDOW* matr, WINDOW* err) {
       ShowMatrix(mtrxs.second, matr, err);
       break;
     case CL_RES:
-      if (!result.Empty())
-        ShowMatrix(result, matr, err);
+      if (!result.Empty()) ShowMatrix(result, matr, err);
       break;
     case PAR_RES:
-      if (!async_result.Empty())
-        ShowMatrix(async_result, matr, err);
+      if (!async_result.Empty()) ShowMatrix(async_result, matr, err);
       break;
     default:
-      mvwprintw(menu, SHOW, 1 + choices[SHOW - 1].size() + 1, "%d is invalid", matr_num); 
+      mvwprintw(menu, SHOW, 1 + choices[SHOW - 1].size() + 1, "%d is invalid",
+                matr_num);
       break;
   }
 }

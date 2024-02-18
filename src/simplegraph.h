@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-template<typename T>
+template <typename T>
 class SimpleGraph {
  private:
   struct ProxyRow {
@@ -50,7 +50,6 @@ class SimpleGraph {
     istrm.close();
   }
 
-
   /* bool IsDirect() const noexcept { return directed; } */
 
   bool Empty() const noexcept { return adjacent_.empty(); }
@@ -61,9 +60,8 @@ class SimpleGraph {
     if (!(r1 < rows && r2 < rows) || !(r1 >= 0 && r2 >= 0))
       throw std::range_error("incorrect row");
 
-    if (r1 == r2)
-      return;
-    
+    if (r1 == r2) return;
+
     for (int j = 0; j != cols; ++j)
       std::swap(adjacent_[r1 * cols + j], adjacent_[r2 * cols + j]);
   }
@@ -72,10 +70,7 @@ class SimpleGraph {
   int get_cols() const { return cols; }
 
  public:
-
-  ProxyRow operator[](int row) {
-    return adjacent_.data() + row * cols;
-  }
+  ProxyRow operator[](int row) { return adjacent_.data() + row * cols; }
 
   const ProxyRow operator[](int row) const {
     return adjacent_.data() + row * cols;
@@ -99,18 +94,17 @@ class SimpleGraph {
   int rows;
   int cols;
   /* bool directed; */
-
 };
 
-template<typename T>
+template <typename T>
 inline std::ostream& operator<<(std::ostream& os, const SimpleGraph<T>& g) {
   g.dump(os);
   return os;
 }
 
-template<typename T>
+template <typename T>
 bool operator==(const SimpleGraph<T>& lhs, const SimpleGraph<T>& rhs) {
   return lhs.IsEqual(rhs);
 }
 
-#endif // SIMPLE_GRAPH_H_
+#endif  // SIMPLE_GRAPH_H_

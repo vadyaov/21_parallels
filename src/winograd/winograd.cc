@@ -1,9 +1,8 @@
 #include "winograd.h"
 
-#include <iostream>
-#include <thread>
-
 #include <omp.h>
+
+#include <thread>
 
 SimpleGraph<double> Winograd::Multiply(const SimpleGraph<double>& g,
                                        const SimpleGraph<double>& h) {
@@ -42,14 +41,15 @@ SimpleGraph<double> Winograd::Multiply(const SimpleGraph<double>& g,
     for (int j = 0; j != c; ++j) {
       r[i][j] = -rowFactor[i] - colFactor[j];
       for (int k = 0; k != d; ++k) {
-        r[i][j] += (g[i][2 * k] + h[2 * k + 1][j]) * (g[i][2 * k + 1] + h[2 * k][j]);
+        r[i][j] +=
+            (g[i][2 * k] + h[2 * k + 1][j]) * (g[i][2 * k + 1] + h[2 * k][j]);
       }
     }
   }
 
   // прибавление членов в случае нечетной общей размерности
   if (2 * d != b) {
-    for (int i = 0; i != a; ++i) { 
+    for (int i = 0; i != a; ++i) {
       for (int j = 0; j != c; ++j) {
         r[i][j] += g[i][b - 1] * h[b - 1][j];
       }
@@ -108,7 +108,8 @@ SimpleGraph<double> Winograd::AsyncMultiply(const SimpleGraph<double>& g,
     for (int j = 0; j != c; ++j) {
       r[i][j] = -rowFactor[i] - columnFactor[j];
       for (int k = 0; k != d; ++k) {
-        r[i][j] += (g[i][2 * k] + h[2 * k + 1][j]) * (g[i][2 * k + 1] + h[2 * k][j]);
+        r[i][j] +=
+            (g[i][2 * k] + h[2 * k + 1][j]) * (g[i][2 * k + 1] + h[2 * k][j]);
       }
     }
   }
@@ -116,7 +117,7 @@ SimpleGraph<double> Winograd::AsyncMultiply(const SimpleGraph<double>& g,
   // прибавление членов в случае нечетной общей размерности
   if (2 * d != b) {
 #pragma omp parallel for
-    for (int i = 0; i != a; ++i) { 
+    for (int i = 0; i != a; ++i) {
       for (int j = 0; j != c; ++j) {
         r[i][j] += g[i][b - 1] * h[b - 1][j];
       }
@@ -126,9 +127,8 @@ SimpleGraph<double> Winograd::AsyncMultiply(const SimpleGraph<double>& g,
   return r;
 }
 
-SimpleGraph<double> Winograd::AsyncPipelineMultiply(const SimpleGraph<double>& g,
-                                                    const SimpleGraph<double>& h) {
-
+SimpleGraph<double> Winograd::AsyncPipelineMultiply(
+    const SimpleGraph<double>& g, const SimpleGraph<double>& h) {
   if (g.get_cols() != h.get_rows())
     throw std::invalid_argument("Incorrect matrix size for miltiplication");
 
@@ -142,8 +142,10 @@ SimpleGraph<double> Winograd::AsyncPipelineMultiply(const SimpleGraph<double>& g
 
   SimpleGraph<double> r(a, c);
 
-  std::thread row_fact_thread(RowFactorCompute, std::cref(g), std::ref(rowFactor), a, d);
-  std::thread col_fact_thread(ColFactorCompute, std::cref(h), std::ref(colFactor), c, d);
+  std::thread row_fact_thread(RowFactorCompute, std::cref(g),
+                              std::ref(rowFactor), a, d);
+  std::thread col_fact_thread(ColFactorCompute, std::cref(h),
+                              std::ref(colFactor), c, d);
 
   row_fact_thread.join();
   col_fact_thread.join();
@@ -152,20 +154,21 @@ SimpleGraph<double> Winograd::AsyncPipelineMultiply(const SimpleGraph<double>& g
     for (int j = 0; j != c; ++j) {
       r[i][j] = -rowFactor[i] - colFactor[j];
       for (int k = 0; k != d; ++k) {
-        r[i][j] += (g[i][2 * k] + h[2 * k + 1][j]) * (g[i][2 * k + 1] + h[2 * k][j]);
+        r[i][j] +=
+            (g[i][2 * k] + h[2 * k + 1][j]) * (g[i][2 * k + 1] + h[2 * k][j]);
       }
     }
   }
 
   std::thread ifeven_thread([=, &r, &g, &h]() {
-        if (2 * d != b) {
-          for (int i = 0; i != a; ++i) { 
-            for (int j = 0; j != c; ++j) {
-              r[i][j] += g[i][b - 1] * h[b - 1][j];
-            }
-          }
+    if (2 * d != b) {
+      for (int i = 0; i != a; ++i) {
+        for (int j = 0; j != c; ++j) {
+          r[i][j] += g[i][b - 1] * h[b - 1][j];
         }
-      });
+      }
+    }
+  });
   ifeven_thread.join();
 
   return r;

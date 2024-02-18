@@ -1,8 +1,9 @@
 #include "console.h"
 
-#include <limits>
 #include <locale.h>
+
 #include <chrono>
+#include <limits>
 
 void Console::PrintGraph(WINDOW* graph_win) {
   int x = 1, y = 1;
@@ -18,7 +19,8 @@ void Console::PrintGraph(WINDOW* graph_win) {
   wrefresh(graph_win);
 }
 
-void print_result_window(WINDOW* output, const std::vector<double>& res, double ms) {
+void print_result_window(WINDOW* output, const std::vector<double>& res,
+                         double ms) {
   int x = 1, y = 1;
   box(output, 0, 0);
   for (const double i : res) {
@@ -57,9 +59,7 @@ void Console::Run() {
   setlocale(LC_ALL, "");
 
   const std::vector<std::string> choices = {
-      "Select .txt file with matrix:",
-      "Input number of executions (N):",
-      "RUN",
+      "Select .txt file with matrix:", "Input number of executions (N):", "RUN",
       "Exit"};
 
   int highlight = 1;
@@ -105,82 +105,81 @@ void Console::Run() {
       wattron(menu_win, A_BOLD);
 
       switch (choice) {
-        case LOAD:
-          {
-            char filepath[100] = {0};
-            mvwscanw(menu_win, choice, 1 + choices[choice - 1].size() + 1, "%s", filepath);
-            path = std::string(filepath);
-            try {
-              matrix.LoadGraphFromFile(path);
+        case LOAD: {
+          char filepath[100] = {0};
+          mvwscanw(menu_win, choice, 1 + choices[choice - 1].size() + 1, "%s",
+                   filepath);
+          path = std::string(filepath);
+          try {
+            matrix.LoadGraphFromFile(path);
 
-              // if win already has content -> clear to avoid text overlay
-              if (matr_win) {
-                delwin(matr_win);
-              }
-              matr_win = newwin(matrix.get_rows() + 2, matrix.get_cols() * 6,
-                                          12, maxx / 2 - matrix.get_cols() * 2);
-
-              PrintGraph(matr_win);
-            } catch (const std::exception& e) {
-              wmove(menu_win, choice, 1 + choices[choice - 1].size() + 1);
-              wclrtoeol(menu_win);
-              mvwprintw(menu_win, choice, 1 + choices[choice - 1].size() + 1, "%s ", e.what()); 
+            // if win already has content -> clear to avoid text overlay
+            if (matr_win) {
+              delwin(matr_win);
             }
-            break;
+            matr_win = newwin(matrix.get_rows() + 2, matrix.get_cols() * 6, 12,
+                              maxx / 2 - matrix.get_cols() * 2);
+
+            PrintGraph(matr_win);
+          } catch (const std::exception& e) {
+            wmove(menu_win, choice, 1 + choices[choice - 1].size() + 1);
+            wclrtoeol(menu_win);
+            mvwprintw(menu_win, choice, 1 + choices[choice - 1].size() + 1,
+                      "%s ", e.what());
           }
-        case EXEC_NUM:
-          {
-            mvwscanw(menu_win, choice, 1 + choices[choice - 1].size() + 1, "%d", &exec_num);
-            if (exec_num < 1)
-              mvwprintw(menu_win, choice, 1 + choices[choice - 1].size() + 1,
-                                                    "%d is invalid", exec_num);
-            break;
-          }
-        case RUN:
-          {
-            if (exec_num < 1) break;
+          break;
+        }
+        case EXEC_NUM: {
+          mvwscanw(menu_win, choice, 1 + choices[choice - 1].size() + 1, "%d",
+                   &exec_num);
+          if (exec_num < 1)
+            mvwprintw(menu_win, choice, 1 + choices[choice - 1].size() + 1,
+                      "%d is invalid", exec_num);
+          break;
+        }
+        case RUN: {
+          if (exec_num < 1) break;
 
-              if (classic_res_win) delwin(classic_res_win);
-              classic_res_win = newwin(5, maxx / 2, maxy - 6, 0);
+          if (classic_res_win) delwin(classic_res_win);
+          classic_res_win = newwin(5, maxx / 2, maxy - 6, 0);
 
-              if (parallel_res_win) delwin(parallel_res_win);
-              parallel_res_win = newwin(5, maxx / 2, maxy - 6, maxx / 2);
+          if (parallel_res_win) delwin(parallel_res_win);
+          parallel_res_win = newwin(5, maxx / 2, maxy - 6, maxx / 2);
 
-              try {
-                std::vector<double> solution;
-                int opt = GaussMethod::Gauss::Solve(matrix, solution);
-                int executions = exec_num;
+          try {
+            std::vector<double> solution;
+            int opt = GaussMethod::Gauss::Solve(matrix, solution);
+            int executions = exec_num;
 
-                if (opt != GaussMethod::Gauss::ONE) {
-                  print_result_error_window(classic_res_win, opt);
-                  print_result_error_window(parallel_res_win, opt);
-                } else {
-                  auto t1 = std::chrono::high_resolution_clock::now();
+            if (opt != GaussMethod::Gauss::ONE) {
+              print_result_error_window(classic_res_win, opt);
+              print_result_error_window(parallel_res_win, opt);
+            } else {
+              auto t1 = std::chrono::high_resolution_clock::now();
 
-                  while (executions--) {
-                    GaussMethod::Gauss::Solve(matrix, solution);
-                  }
-
-                  auto t2 = std::chrono::high_resolution_clock::now();
-                  std::chrono::duration<double, std::milli> ms_double = t2 - t1;
-                  print_result_window(classic_res_win, solution, ms_double.count());
-
-
-                  executions = exec_num;
-
-                  auto t3 = std::chrono::high_resolution_clock::now();
-                  while (executions--) {
-                    GaussMethod::Gauss::ParallelSolve(matrix, solution);
-                  }
-                  auto t4 = std::chrono::high_resolution_clock::now();
-                  ms_double = t4 - t3;
-
-                  print_result_window(parallel_res_win, solution, ms_double.count());
-                }
-              } catch (const std::exception& e) {
-
+              while (executions--) {
+                GaussMethod::Gauss::Solve(matrix, solution);
               }
+
+              auto t2 = std::chrono::high_resolution_clock::now();
+              std::chrono::duration<double, std::milli> ms_double = t2 - t1;
+              print_result_window(classic_res_win, solution, ms_double.count());
+
+              executions = exec_num;
+
+              auto t3 = std::chrono::high_resolution_clock::now();
+              while (executions--) {
+                GaussMethod::Gauss::ParallelSolve(matrix, solution);
+              }
+              auto t4 = std::chrono::high_resolution_clock::now();
+              ms_double = t4 - t3;
+
+              print_result_window(parallel_res_win, solution,
+                                  ms_double.count());
+            }
+          } catch (const std::exception& e) {
           }
+        }
       }
       wattroff(menu_win, A_BOLD);
       PrintMenu(menu_win, highlight, choices);

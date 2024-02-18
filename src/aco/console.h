@@ -9,7 +9,7 @@ class Console final : public BaseConsole {
   enum Action { NO_ACTION = 0, LOAD, EXEC_NUM, RUN, EXIT };
 
   Console() : BaseConsole() {}
-  ~Console()  {}
+  ~Console() {}
 
   void Run() override;
 

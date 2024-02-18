@@ -4,7 +4,6 @@
 #include <cmath>
 #include <limits>
 #include <random>
-
 #include <thread>
 
 namespace {
@@ -17,7 +16,8 @@ double RandomValue() {
   return normal_distrib(engine);
 }
 
-std::vector<std::vector<double>> NormalizedGraph(const SimpleGraph<int>& graph) {
+std::vector<std::vector<double>> NormalizedGraph(
+    const SimpleGraph<int>& graph) {
   const std::size_t sz = graph.Size();
 
   std::vector<std::vector<double>> normalized(sz, std::vector<double>(sz));
@@ -62,7 +62,6 @@ AntColony::TsmResult MinimalSolution(
 
 void UpdateFeromones(std::vector<std::vector<double>>& feromones,
                      std::vector<AntColony::TsmResult>& paths) {
-  
   static const double reduce = 0.6;
   static const double Q = 320.0;
   static const int sz = feromones.size();
@@ -78,11 +77,10 @@ void UpdateFeromones(std::vector<std::vector<double>>& feromones,
     }
   }
 }
-std::vector<double> CalculateChances(const std::vector<std::vector<double>>& dist,
-                                     const std::vector<std::vector<double>>& fero,
-                                     const std::vector<bool>& visited,
-                                     int current_point) {
-
+std::vector<double> CalculateChances(
+    const std::vector<std::vector<double>>& dist,
+    const std::vector<std::vector<double>>& fero,
+    const std::vector<bool>& visited, int current_point) {
   static const double alpha = 1.0;
   static const double beta = 4.0;
 
@@ -98,10 +96,9 @@ std::vector<double> CalculateChances(const std::vector<std::vector<double>>& dis
   for (size_t j = 0; j != dist.size(); ++j) chances[j] = wish[j] / wish_sum;
 
   return chances;
-
 }
 
-} // namespace
+}  // namespace
 
 struct CreatePathForOneAnt {
   const SimpleGraph<int>& gr;
@@ -109,34 +106,36 @@ struct CreatePathForOneAnt {
   const std::vector<std::vector<double>>& d;
   const std::vector<std::vector<double>>& f;
 
-  CreatePathForOneAnt(const SimpleGraph<int>& aco, AntColony::TsmResult& t_, std::vector<std::vector<double>>& d_, 
-       std::vector<std::vector<double>>& f_) : gr{aco}, tsm{t_}, d{d_}, f{f_} {}
+  CreatePathForOneAnt(const SimpleGraph<int>& aco, AntColony::TsmResult& t_,
+                      std::vector<std::vector<double>>& d_,
+                      std::vector<std::vector<double>>& f_)
+      : gr{aco}, tsm{t_}, d{d_}, f{f_} {}
 
   void operator()(int ant) {
-      int curr_point = ant;
-      const int sz = gr.Size();
+    int curr_point = ant;
+    const int sz = gr.Size();
 
-      std::vector<bool> visited(sz, false);
+    std::vector<bool> visited(sz, false);
 
-      tsm.vertices[0] = tsm.vertices[sz] = curr_point;
+    tsm.vertices[0] = tsm.vertices[sz] = curr_point;
 
-      // creating the path for ant No.i
-      for (int i = 0; i < sz - 1; ++i) {
-        visited[curr_point] = true;
+    // creating the path for ant No.i
+    for (int i = 0; i < sz - 1; ++i) {
+      visited[curr_point] = true;
 
-        std::vector<double> chances = CalculateChances(d, f, visited, curr_point);
+      std::vector<double> chances = CalculateChances(d, f, visited, curr_point);
 
-        int prev_point = curr_point;
-        curr_point = Roulette(chances); // choose the next vertex to go
+      int prev_point = curr_point;
+      curr_point = Roulette(chances);  // choose the next vertex to go
 
-        if (curr_point == -1)
-          throw std::runtime_error("Cannot find the solution");
+      if (curr_point == -1)
+        throw std::runtime_error("Cannot find the solution");
 
-        tsm.vertices[i + 1] = curr_point;
-        tsm.distance += gr[prev_point][curr_point];
-      }
+      tsm.vertices[i + 1] = curr_point;
+      tsm.distance += gr[prev_point][curr_point];
+    }
 
-      tsm.distance += gr[curr_point][ant];
+    tsm.distance += gr[curr_point][ant];
   }
 };
 
@@ -149,10 +148,11 @@ AntColony::TsmResult AntColony::ClassicSolve(const SimpleGraph<int>& g, int n) {
   std::vector<std::vector<double>> dist = NormalizedGraph(g);
   std::vector<std::vector<double>> fero(sz, std::vector<double>(sz, 0.2));
 
-  for (int iter = 0; iter < n; ++iter) { // number of populations
+  for (int iter = 0; iter < n; ++iter) {  // number of populations
     std::vector<TsmResult> ants_path(sz, {std::vector<int>(sz + 1, 0), 0});
 
-    for (int ant = 0; ant < sz; ++ant) { // ants number is always equal to vertex number
+    for (int ant = 0; ant < sz;
+         ++ant) {  // ants number is always equal to vertex number
       CreatePathForOneAnt(g, ants_path[ant], dist, fero)(ant);
     }
 
@@ -165,7 +165,8 @@ AntColony::TsmResult AntColony::ClassicSolve(const SimpleGraph<int>& g, int n) {
   return min_path;
 }
 
-AntColony::TsmResult AntColony::ParallelSolve(const SimpleGraph<int>& g, int n) {
+AntColony::TsmResult AntColony::ParallelSolve(const SimpleGraph<int>& g,
+                                              int n) {
   const int sz = g.Size();
   if (sz == 0) throw std::invalid_argument("Empty graph");
 
@@ -176,19 +177,19 @@ AntColony::TsmResult AntColony::ParallelSolve(const SimpleGraph<int>& g, int n) 
 
   std::vector<std::thread> threads;
 
-  for (int iter = 0; iter < n; ++iter) { // number of populations
+  for (int iter = 0; iter < n; ++iter) {  // number of populations
     std::vector<TsmResult> ants_path(sz, {std::vector<int>(sz + 1, 0), 0});
 
     threads.clear();
 
     for (int ant = 0; ant < sz; ++ant) {
-      threads.emplace_back(CreatePathForOneAnt(g, ants_path[ant], dist, fero), ant);
+      threads.emplace_back(CreatePathForOneAnt(g, ants_path[ant], dist, fero),
+                           ant);
       /* CreatePathForOneAnt(*this, ants_path[ant], dist, fero)(ant); */
     }
 
-    std::for_each(threads.begin(), threads.end(), [](std::thread &t) {
-        t.join();
-      });
+    std::for_each(threads.begin(), threads.end(),
+                  [](std::thread& t) { t.join(); });
 
     UpdateFeromones(fero, ants_path);
 

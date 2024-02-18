@@ -1,8 +1,8 @@
 #ifndef CONSOLE_H_
 #define CONSOLE_H_
 
-#include "gauss.h"
 #include "../consolebase.h"
+#include "gauss.h"
 
 class Console final : public BaseConsole {
  public:
@@ -17,7 +17,6 @@ class Console final : public BaseConsole {
 
  private:
   SimpleGraph<double> matrix;
-
 };
 
 #endif  // CONSOLE_H_
