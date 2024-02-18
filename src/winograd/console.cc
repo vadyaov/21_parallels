@@ -2,47 +2,13 @@
 #include "winograd.h"
 
 #include <chrono>
-#include <iostream>
 #include <sstream>
-#include <random>
 #include <functional>
 
-double RandomValue(double min, double max) {
-  static std::random_device rd;     // Only used once to initialise (seed) engine
-  static std::mt19937 rng(rd());    // Random-number engine used (Mersenne-Twister in this case)
-  static std::uniform_real_distribution<double> uni(min,max); // Guaranteed unbiased
-
-  return uni(rng);
-}
-
-SimpleGraph<double> RandomMatrix(int rows, int cols) {
-  SimpleGraph<double> g(rows, cols);
-  for (int i = 0; i < rows; ++i) {
-    for (int j = 0; j < cols; ++j) {
-      g[i][j] = RandomValue(10, 50);
-    }
-  }
-  return g;
-}
-
-bool Printable(const Console::d_graph& gr, int xmax, int ymax) {
-  bool printable = true;
-
-  if (gr.get_cols() * 8 + gr.get_cols() - 1 > xmax)
-    printable = false;
-
-  if (gr.get_rows() > ymax)
-    printable = false;
-
-  return printable;
-}
-
-void print_result_window(WINDOW* output, double ms) {
-  int x = 1, y = 1;
-  box(output, 0, 0);
-  mvwprintw(output, ++y, x, "Execution time = %lf ms", ms);
-  wrefresh(output);
-}
+SimpleGraph<double> RandomMatrix(int rows, int cols);
+bool Printable(const Console::d_graph& gr, int xmax, int ymax);
+void print_result_window(WINDOW* output, double ms);
+void print_error_window(WINDOW* output, const char * msg);
 
 template<typename Function, typename... Args>
 double RunMultiplication(int exec_num, Console::d_graph& result, Function&& func, Args&&... args) {
@@ -55,94 +21,6 @@ double RunMultiplication(int exec_num, Console::d_graph& result, Function&& func
   auto t2 = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double, std::milli> ms_double = t2 - t1;
   return ms_double.count();
-}
-
-void print_error_window(WINDOW* output, const char * msg) {
-  box(output, 0, 0);
-  mvwprintw(output, 1, 1, "%s", msg);
-  wrefresh(output);
-}
-
-void Console::LoadMatrices(WINDOW* menu) {
-  char filepaths[256] = {0};
-  mvwgetstr(menu, LOAD, 1 + choices[LOAD - 1].size() + 1, filepaths);
-
-  std::stringstream sstr{filepaths};
-  std::string path2;
-  sstr >> path >> path2;
-  try {
-    mtrxs.first.LoadGraphFromFile(path);
-    mtrxs.second.LoadGraphFromFile(path2);
-  } catch (const std::exception& e) {
-    wmove(menu, LOAD, 1 + choices[LOAD - 1].size() + 1);
-    wclrtoeol(menu);
-    mvwprintw(menu, LOAD, 1 + choices[LOAD - 1].size() + 1, "%s ", e.what()); 
-  }
-}
-
-void Console::GenerateMatrices(WINDOW* menu) {
-  char sizes[256] = {0};
-  mvwgetstr(menu, GENERATE, 1 + choices[GENERATE - 1].size() + 1, sizes);
-  std::stringstream sstr{sizes};
-  int r1, r2, c1, c2;
-  sstr >> r1 >> c1 >> r2 >> c2;
-
-  mtrxs.first = RandomMatrix(r1, c1);
-  mtrxs.second = RandomMatrix(r2, c2);
-}
-
-void Console::ShowMatrix(const d_graph& mtr, WINDOW* matr, WINDOW* err) {
-  matr= newwin(mtr.get_rows() + 2, maxx, 10, 0);
-  if (!Printable(mtr, maxx, maxy - (choices.size() + 2) - 7)) {
-    print_error_window(err, "Matrix is too big for correct printing");
-  }
-
-  PrintResMatrix(matr, mtr);
-}
-
-void Console::ShowProcess(WINDOW* menu, WINDOW* matr, WINDOW* err) {
-  wClear(stdscr, choices.size() + 2, maxy - 7);
-
-  char input[2] = {0};
-  mvwgetstr(menu, SHOW, 1 + choices[SHOW - 1].size() + 1, input);
-  std::stringstream sstr{input};
-  int matr_num;
-  sstr >> matr_num;
-
-  if (matr) delwin(matr);
-  switch(matr_num) {
-    case FIRST:
-      ShowMatrix(mtrxs.first, matr, err);
-      break;
-    case SECOND:
-      ShowMatrix(mtrxs.second, matr, err);
-      break;
-    case CL_RES:
-      if (!result.Empty())
-        ShowMatrix(result, matr, err);
-      break;
-    case PAR_RES:
-      if (!async_result.Empty())
-        ShowMatrix(async_result, matr, err);
-      break;
-    default:
-      mvwprintw(menu, SHOW, 1 + choices[SHOW - 1].size() + 1, "%d is invalid", matr_num); 
-      break;
-  }
-}
-
-void Console::PrintResMatrix(WINDOW* output, const d_graph& g) {
-  int x = 1, y = 1;
-  box(output, 0, 0);
-  for (int i = 0; i != g.get_rows(); ++i) {
-    for (int j = 0; j != g.get_cols(); ++j) {
-      mvwprintw(output, y, x, "%.2e", g[i][j]);
-      x += 9;
-    }
-    y++;
-    x = 1;
-  }
-  wrefresh(output);
 }
 
 void Console::Run() {
@@ -273,4 +151,86 @@ void Console::Run() {
   delwin(classic_res_win);
   delwin(parallel_res_win);
   delwin(err_win);
+}
+
+void Console::LoadMatrices(WINDOW* menu) {
+  char filepaths[256] = {0};
+  mvwgetstr(menu, LOAD, 1 + choices[LOAD - 1].size() + 1, filepaths);
+
+  std::stringstream sstr{filepaths};
+  std::string path2;
+  sstr >> path >> path2;
+  try {
+    mtrxs.first.LoadGraphFromFile(path);
+    mtrxs.second.LoadGraphFromFile(path2);
+  } catch (const std::exception& e) {
+    wmove(menu, LOAD, 1 + choices[LOAD - 1].size() + 1);
+    wclrtoeol(menu);
+    mvwprintw(menu, LOAD, 1 + choices[LOAD - 1].size() + 1, "%s ", e.what()); 
+  }
+}
+
+void Console::GenerateMatrices(WINDOW* menu) {
+  char sizes[256] = {0};
+  mvwgetstr(menu, GENERATE, 1 + choices[GENERATE - 1].size() + 1, sizes);
+  std::stringstream sstr{sizes};
+  int r1, r2, c1, c2;
+  sstr >> r1 >> c1 >> r2 >> c2;
+
+  mtrxs.first = RandomMatrix(r1, c1);
+  mtrxs.second = RandomMatrix(r2, c2);
+}
+
+void Console::ShowMatrix(const d_graph& mtr, WINDOW* matr, WINDOW* err) {
+  matr= newwin(mtr.get_rows() + 2, maxx, 10, 0);
+  if (!Printable(mtr, maxx, maxy - (choices.size() + 2) - 7)) {
+    print_error_window(err, "Matrix is too big for correct printing");
+  }
+
+  PrintResMatrix(matr, mtr);
+}
+
+void Console::ShowProcess(WINDOW* menu, WINDOW* matr, WINDOW* err) {
+  wClear(stdscr, choices.size() + 2, maxy - 7);
+
+  char input[2] = {0};
+  mvwgetstr(menu, SHOW, 1 + choices[SHOW - 1].size() + 1, input);
+  std::stringstream sstr{input};
+  int matr_num;
+  sstr >> matr_num;
+
+  if (matr) delwin(matr);
+  switch(matr_num) {
+    case FIRST:
+      ShowMatrix(mtrxs.first, matr, err);
+      break;
+    case SECOND:
+      ShowMatrix(mtrxs.second, matr, err);
+      break;
+    case CL_RES:
+      if (!result.Empty())
+        ShowMatrix(result, matr, err);
+      break;
+    case PAR_RES:
+      if (!async_result.Empty())
+        ShowMatrix(async_result, matr, err);
+      break;
+    default:
+      mvwprintw(menu, SHOW, 1 + choices[SHOW - 1].size() + 1, "%d is invalid", matr_num); 
+      break;
+  }
+}
+
+void Console::PrintResMatrix(WINDOW* output, const d_graph& g) {
+  int x = 1, y = 1;
+  box(output, 0, 0);
+  for (int i = 0; i != g.get_rows(); ++i) {
+    for (int j = 0; j != g.get_cols(); ++j) {
+      mvwprintw(output, y, x, "%.2e", g[i][j]);
+      x += 9;
+    }
+    y++;
+    x = 1;
+  }
+  wrefresh(output);
 }
