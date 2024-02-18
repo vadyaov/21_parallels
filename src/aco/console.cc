@@ -5,6 +5,8 @@
 #include <chrono>
 #include <limits>
 
+namespace ant {
+
 void print_result_window(WINDOW* output, const AntColony::TsmResult& res,
                          double ms) {
   int x = 1, y = 1;
@@ -185,3 +187,5 @@ void Console::Run() {
   delwin(classic_aco_win);
   delwin(parallel_aco_win);
 }
+
+} // namespace ant

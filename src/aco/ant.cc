@@ -8,6 +8,8 @@
 
 namespace {
 
+  using ant::AntColony;
+
 double RandomValue() {
   static std::random_device rd;
   static std::mt19937 engine(rd());
@@ -100,6 +102,8 @@ std::vector<double> CalculateChances(
 
 }  // namespace
 
+namespace ant {
+
 struct CreatePathForOneAnt {
   const SimpleGraph<int>& gr;
   AntColony::TsmResult& tsm;
@@ -185,7 +189,6 @@ AntColony::TsmResult AntColony::ParallelSolve(const SimpleGraph<int>& g,
     for (int ant = 0; ant < sz; ++ant) {
       threads.emplace_back(CreatePathForOneAnt(g, ants_path[ant], dist, fero),
                            ant);
-      /* CreatePathForOneAnt(*this, ants_path[ant], dist, fero)(ant); */
     }
 
     std::for_each(threads.begin(), threads.end(),
@@ -199,3 +202,5 @@ AntColony::TsmResult AntColony::ParallelSolve(const SimpleGraph<int>& g,
 
   return min_path;
 }
+
+} // namespace ant

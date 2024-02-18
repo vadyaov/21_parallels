@@ -1,7 +1,7 @@
 #include "console.h"
 
 int main() {
-  Console app;
+  ant::Console app;
   app.Run();
   return 0;
 }

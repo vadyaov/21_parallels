@@ -3,6 +3,8 @@
 
 #include "../simplegraph.h"
 
+namespace ant {
+
 class AntColony {
  public:
   struct TsmResult {
@@ -18,5 +20,7 @@ class AntColony {
                                const std::vector<std::vector<double>>& dist,
                                const std::vector<std::vector<double>>& fero);
 };
+
+} // namespace ant
 
 #endif  // ACO_H_

@@ -5,7 +5,7 @@
 
 #include "../simplegraph.h"
 
-namespace GaussMethod {
+namespace gaussmethod {
 
 class Gauss {
  public:
@@ -17,6 +17,6 @@ class Gauss {
                            std::vector<double>& answer);
 };
 
-}  // namespace GaussMethod
+}  // namespace gaussmethod
 
 #endif  // GAUSS_H_
