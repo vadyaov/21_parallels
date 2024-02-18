@@ -5,6 +5,8 @@
 #include <chrono>
 #include <limits>
 
+namespace gaussmethod {
+
 void Console::PrintGraph(WINDOW* graph_win) {
   int x = 1, y = 1;
   box(graph_win, 0, 0);
@@ -41,7 +43,7 @@ void print_result_window(WINDOW* output, const std::vector<double>& res,
 void print_result_error_window(WINDOW* output, int flag) {
   box(output, 0, 0);
 
-  if (flag == GaussMethod::Gauss::NONE)
+  if (flag == Gauss::NONE)
     mvwprintw(output, 1, 1, "NO SOLUTION EXISTS");
   else
     mvwprintw(output, 1, 1, "A LOT OF SOLUTIONS");
@@ -148,17 +150,17 @@ void Console::Run() {
 
           try {
             std::vector<double> solution;
-            int opt = GaussMethod::Gauss::Solve(matrix, solution);
+            int opt = Gauss::Solve(matrix, solution);
             int executions = exec_num;
 
-            if (opt != GaussMethod::Gauss::ONE) {
+            if (opt != Gauss::ONE) {
               print_result_error_window(classic_res_win, opt);
               print_result_error_window(parallel_res_win, opt);
             } else {
               auto t1 = std::chrono::high_resolution_clock::now();
 
               while (executions--) {
-                GaussMethod::Gauss::Solve(matrix, solution);
+                Gauss::Solve(matrix, solution);
               }
 
               auto t2 = std::chrono::high_resolution_clock::now();
@@ -169,7 +171,7 @@ void Console::Run() {
 
               auto t3 = std::chrono::high_resolution_clock::now();
               while (executions--) {
-                GaussMethod::Gauss::ParallelSolve(matrix, solution);
+                Gauss::ParallelSolve(matrix, solution);
               }
               auto t4 = std::chrono::high_resolution_clock::now();
               ms_double = t4 - t3;
@@ -196,3 +198,5 @@ void Console::Run() {
   delwin(classic_res_win);
   delwin(parallel_res_win);
 }
+
+} // namespace gaussmethod

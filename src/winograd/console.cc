@@ -6,6 +6,8 @@
 
 #include "winograd.h"
 
+namespace winograd {
+
 SimpleGraph<double> RandomMatrix(int rows, int cols);
 bool Printable(const Console::d_graph& gr, int xmax, int ymax);
 void print_result_window(WINDOW* output, double ms);
@@ -240,3 +242,4 @@ void Console::PrintResMatrix(WINDOW* output, const d_graph& g) {
   }
   wrefresh(output);
 }
+} // namespace winograd

@@ -3,6 +3,8 @@
 
 #include "console.h"
 
+namespace winograd {
+
 double RandomValue(double min, double max) {
   static std::random_device rd;  // Only used once to initialise (seed) engine
   static std::mt19937 rng(
@@ -45,3 +47,5 @@ void print_error_window(WINDOW* output, const char* msg) {
   mvwprintw(output, 1, 1, "%s", msg);
   wrefresh(output);
 }
+
+} // namespace winograd

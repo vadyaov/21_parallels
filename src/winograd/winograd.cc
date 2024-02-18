@@ -4,6 +4,8 @@
 
 #include <thread>
 
+namespace winograd {
+
 SimpleGraph<double> Winograd::Multiply(const SimpleGraph<double>& g,
                                        const SimpleGraph<double>& h) {
   if (g.get_cols() != h.get_rows())
@@ -173,3 +175,5 @@ SimpleGraph<double> Winograd::AsyncPipelineMultiply(
 
   return r;
 }
+
+} // namespace winograd

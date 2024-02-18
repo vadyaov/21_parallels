@@ -3,6 +3,8 @@
 #include "../consolebase.h"
 #include "../simplegraph.h"
 
+namespace winograd {
+
 class Console final : public BaseConsole {
  public:
   using d_graph = SimpleGraph<double>;
@@ -49,3 +51,5 @@ class Console final : public BaseConsole {
   void ShowProcess(WINDOW* menu, WINDOW* matr, WINDOW* err);
   void ShowMatrix(const d_graph& mtr, WINDOW* matr, WINDOW* err);
 };
+
+} // namespace winograd

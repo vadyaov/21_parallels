@@ -128,15 +128,12 @@ struct BackwardWay {
         sum += matr_ref[row][col];
 
       if (std::abs(sum) < Gauss::EPS && std::abs(matr_ref[row][m]) > Gauss::EPS) {
-        /* idk what to do here */
         /* return NONE; */
       }
 
-      // works because matrix is triangle now
       for (int col = m; col >= row /* 0 */; --col)
         matr_ref[row][col] /= matr_ref[row][row];
 
-      // like a straight way but opposite
       for (int i = row - 1; i >= 0; --i) {
         double K = matr_ref[i][row] / matr_ref[row][row];
         for (int j = m; j >= 0; --j) {

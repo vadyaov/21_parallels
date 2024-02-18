@@ -9,7 +9,7 @@ ANT_SRCS := $(addprefix $(ANT_DIR)/, app.cc console.cc ant.cc)
 GAUSS_SRCS := $(addprefix $(GAUSS_DIR)/, app.cc console.cc gauss.cc)
 WINOGRAD_SRCS := $(addprefix $(WINOGRAD_DIR)/, app.cc console.cc winograd.cc)
 
-all: aco gauss winograd
+all: ant gauss winograd
 
 ant:
 	$(CXX) $(CXXFLAGS) $(ANT_SRCS) -lncursesw -ltinfo -o ant.out
@@ -31,4 +31,4 @@ clean:
 	rm -f *.out
 	rm -f winograd/*.o
 
-.PHONY: aco gauss winograd
+.PHONY: ant gauss winograd

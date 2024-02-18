@@ -1,7 +1,7 @@
 #include "console.h"
 
 int main() {
-  Console app;
+  gaussmethod::Console app;
   app.Run();
   return 0;
 }

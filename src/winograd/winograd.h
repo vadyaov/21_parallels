@@ -3,6 +3,8 @@
 
 #include "../simplegraph.h"
 
+namespace winograd {
+
 class Winograd {
  public:
   static SimpleGraph<double> Multiply(const SimpleGraph<double>& g,
@@ -36,5 +38,7 @@ class Winograd {
     }
   }
 };
+
+} // namespace winograd
 
 #endif  // WINOGRAD_H_

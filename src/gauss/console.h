@@ -4,6 +4,8 @@
 #include "../consolebase.h"
 #include "gauss.h"
 
+namespace gaussmethod {
+
 class Console final : public BaseConsole {
  public:
   enum Action { NO_ACTION = 0, LOAD, EXEC_NUM, RUN, EXIT };
@@ -18,5 +20,6 @@ class Console final : public BaseConsole {
  private:
   SimpleGraph<double> matrix;
 };
+} // namesapce gaussmethod
 
 #endif  // CONSOLE_H_
