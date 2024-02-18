@@ -39,6 +39,6 @@ class Winograd {
   }
 };
 
-} // namespace winograd
+}  // namespace winograd
 
 #endif  // WINOGRAD_H_

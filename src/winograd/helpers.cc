@@ -48,4 +48,4 @@ void print_error_window(WINDOW* output, const char* msg) {
   wrefresh(output);
 }
 
-} // namespace winograd
+}  // namespace winograd

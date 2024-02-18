@@ -1,20 +1,19 @@
 #include "gauss.h"
 
-#include <thread>
-#include <mutex>
-
 #include <iostream>
+#include <mutex>
+#include <thread>
 
 namespace gaussmethod {
 
 int FindPivotRow(const SimpleGraph<double>& matrix, int row, int col) {
   int max_row = row;
   for (int i = row + 1; i != matrix.get_rows(); ++i) {
-    if (matrix[i][col] > matrix[max_row][col])
-      max_row = i;
+    if (matrix[i][col] > matrix[max_row][col]) max_row = i;
   }
 
-  if (std::abs(matrix[max_row][col]) < Gauss::EPS) throw std::runtime_error("continue");
+  if (std::abs(matrix[max_row][col]) < Gauss::EPS)
+    throw std::runtime_error("continue");
 
   return max_row;
 }
@@ -27,14 +26,14 @@ int Gauss::Solve(SimpleGraph<double> matr, std::vector<double>& answer) {
   std::vector<int> where(m, -1);
   for (int row = 0, col = 0; row < n && col < m; ++col) {
     // pivot searching
-      try {
-        matr.SwapRows(row, FindPivotRow(matr, row, col));
-      } catch (...) {
-        continue;
-      }
-      where[col] = row;
+    try {
+      matr.SwapRows(row, FindPivotRow(matr, row, col));
+    } catch (...) {
+      continue;
+    }
+    where[col] = row;
 
-      // making triangle matrix
+    // making triangle matrix
     for (int i = row + 1; i != n; ++i) {
       auto coef = matr[i][col] / matr[row][col];
       for (int j = col; j <= m; ++j) {
@@ -50,8 +49,7 @@ int Gauss::Solve(SimpleGraph<double> matr, std::vector<double>& answer) {
   for (int row = n - 1; row >= 0; --row) {
     // check sum of coefs near 'x'
     double sum = 0;
-    for (int col = m - 1; col >= 0; --col)
-      sum += matr[row][col];
+    for (int col = m - 1; col >= 0; --col) sum += matr[row][col];
 
     if (std::abs(sum) < EPS && std::abs(matr[row][m]) > EPS) {
       return NONE;
@@ -68,14 +66,12 @@ int Gauss::Solve(SimpleGraph<double> matr, std::vector<double>& answer) {
         matr[i][j] = matr[i][j] - matr[row][j] * K;
       }
     }
-
   }
 
   // here we have diagonal main matrix, so answers are free members
 
   for (int i = 0; i != m; ++i)
     if (where[i] == -1) return LOT;
-
 
   for (int i = 0; i != n; ++i) {
     answer[i] = matr[i][n];
@@ -111,7 +107,6 @@ struct StraightWay {
     }
     matr_mtx_ref.unlock();
   }
-
 };
 
 struct BackwardWay {
@@ -119,15 +114,14 @@ struct BackwardWay {
   std::mutex& matr_mtx_ref;
 
   void operator()(int n, int m) {
-
     matr_mtx_ref.lock();
     for (int row = n - 1; row >= 0; --row) {
       // check sum of coefs near 'x'
       double sum = 0;
-      for (int col = m - 1; col >= 0; --col)
-        sum += matr_ref[row][col];
+      for (int col = m - 1; col >= 0; --col) sum += matr_ref[row][col];
 
-      if (std::abs(sum) < Gauss::EPS && std::abs(matr_ref[row][m]) > Gauss::EPS) {
+      if (std::abs(sum) < Gauss::EPS &&
+          std::abs(matr_ref[row][m]) > Gauss::EPS) {
         /* return NONE; */
       }
 
@@ -142,11 +136,11 @@ struct BackwardWay {
       }
     }
     matr_mtx_ref.unlock();
-
   }
 };
 
-int Gauss::ParallelSolve(SimpleGraph<double> matr, std::vector<double>& answer) {
+int Gauss::ParallelSolve(SimpleGraph<double> matr,
+                         std::vector<double>& answer) {
   const int n = matr.get_rows();
   const int m = matr.get_cols() - 1;
 
@@ -174,4 +168,4 @@ int Gauss::ParallelSolve(SimpleGraph<double> matr, std::vector<double>& answer) 
   return ONE;
 }
 
-} // namespace gaussmethod
+}  // namespace gaussmethod

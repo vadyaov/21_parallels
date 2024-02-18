@@ -21,6 +21,6 @@ class AntColony {
                                const std::vector<std::vector<double>>& fero);
 };
 
-} // namespace ant
+}  // namespace ant
 
 #endif  // ACO_H_

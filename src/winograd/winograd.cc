@@ -176,4 +176,4 @@ SimpleGraph<double> Winograd::AsyncPipelineMultiply(
   return r;
 }
 
-} // namespace winograd
+}  // namespace winograd

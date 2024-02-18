@@ -52,4 +52,4 @@ class Console final : public BaseConsole {
   void ShowMatrix(const d_graph& mtr, WINDOW* matr, WINDOW* err);
 };
 
-} // namespace winograd
+}  // namespace winograd

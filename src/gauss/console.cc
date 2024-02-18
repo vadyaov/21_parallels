@@ -199,4 +199,4 @@ void Console::Run() {
   delwin(parallel_res_win);
 }
 
-} // namespace gaussmethod
+}  // namespace gaussmethod

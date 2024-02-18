@@ -188,4 +188,4 @@ void Console::Run() {
   delwin(parallel_aco_win);
 }
 
-} // namespace ant
+}  // namespace ant

@@ -21,6 +21,6 @@ class Console final : public BaseConsole {
   SimpleGraph<int> g;
 };
 
-} // namespace ant
+}  // namespace ant
 
 #endif  // CONSOLE_H_

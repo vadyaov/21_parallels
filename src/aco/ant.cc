@@ -8,7 +8,7 @@
 
 namespace {
 
-  using ant::AntColony;
+using ant::AntColony;
 
 double RandomValue() {
   static std::random_device rd;
@@ -203,4 +203,4 @@ AntColony::TsmResult AntColony::ParallelSolve(const SimpleGraph<int>& g,
   return min_path;
 }
 
-} // namespace ant
+}  // namespace ant

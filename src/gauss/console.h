@@ -20,6 +20,6 @@ class Console final : public BaseConsole {
  private:
   SimpleGraph<double> matrix;
 };
-} // namesapce gaussmethod
+}  // namespace gaussmethod
 
 #endif  // CONSOLE_H_

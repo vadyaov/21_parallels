@@ -242,4 +242,4 @@ void Console::PrintResMatrix(WINDOW* output, const d_graph& g) {
   }
   wrefresh(output);
 }
-} // namespace winograd
+}  // namespace winograd
